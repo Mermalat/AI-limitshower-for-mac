@@ -32,7 +32,7 @@ Codex göstergesi uygulama açıldığında mevcut Codex oturumunu kullanır. CL
 
 Claude bağlantısı varsayılan olarak kapalıdır. Panelde **Claude bağlantısını etkinleştir** düğmesine basınca mevcut Claude Code OAuth token’ının yalnızca `https://api.anthropic.com/api/oauth/usage` adresine gönderilmesine izin verirsin. Token dosyaya veya günlüğe kaydedilmez. Kaynak olarak `~/.claude/.credentials.json` veya macOS Anahtar Zinciri’ndeki `Claude Code-credentials` kaydı okunur. Anahtar Zinciri kendi erişim istemini gösterebilir.
 
-Claude bağlantısını paneldeki üç nokta menüsünden kapatabilirsin. Bu işlem sonraki sorguları durdurur; başlamış bir sorgu tamamlanabilir, ancak sonucu gösterilmez. Oturum süresi dolarsa Claude Code’da oturumunu yenileyip uygulamayı tekrar yenile.
+Oturum süresi dolarsa Claude Code’da oturumunu yenileyip uygulamayı tekrar yenile.
 
 ## Göstergeler
 
@@ -44,7 +44,7 @@ Claude bağlantısını paneldeki üç nokta menüsünden kapatabilirsin. Bu iş
 | Turuncu çubuk | %30 veya daha az kaldı |
 | Kırmızı çubuk | %10 veya daha az kaldı |
 
-Panelde kısa dönem, haftalık ve varsa Claude model kotaları ayrı görünür. Yenilenme saatleri yerel saat dilimindedir. Yenilenme saati geçtiğinde yeni veri okunmadan yüzde kendiliğinden yükselmez. Yenileme beş dakikada bir yapılır; manuel yenilemeler arasında en az 30 saniye gerekir.
+Panelde kısa dönem, haftalık ve varsa Claude model kotaları ayrı görünür. Yenilenme saatleri yerel saat dilimindedir. Yenilenme saati geçtiğinde yeni veri okunmadan yüzde kendiliğinden yükselmez. Panelin altındaki güncelleme yazısı bir seçim menüsüdür: 1–10 dakika arasında aralık seçebilirsin. Varsayılan 5 dakikadır; seçimin yeniden açılışta korunur. Aralık değiştiğinde yeni süre o andan itibaren başlar. Manuel yenilemeler arasında en az 30 saniye gerekir.
 
 ## Sorun giderme
 

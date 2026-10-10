@@ -14,6 +14,10 @@ final class UsageStore: ObservableObject {
     @Published var codexLoading = false
     @Published var claudeLoading = false
     @Published var claudeEnabled = UserDefaults.standard.bool(forKey: "claudeEnabled")
+    @Published private(set) var refreshMinutes: Int = {
+        let saved = UserDefaults.standard.integer(forKey: "refreshMinutes")
+        return (1...10).contains(saved) ? saved : 5
+    }()
     var onChange: (() -> Void)?
     private var timer: Timer?
     private var claudeRetryAt = Date.distantPast
@@ -21,7 +25,19 @@ final class UsageStore: ObservableObject {
 
     func start() {
         refresh()
-        timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+        scheduleRefresh()
+    }
+
+    func setRefreshMinutes(_ minutes: Int) {
+        guard (1...10).contains(minutes), minutes != refreshMinutes else { return }
+        refreshMinutes = minutes
+        UserDefaults.standard.set(minutes, forKey: "refreshMinutes")
+        scheduleRefresh()
+    }
+
+    private func scheduleRefresh() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(refreshMinutes * 60), repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
     }
@@ -67,13 +83,6 @@ final class UsageStore: ObservableObject {
         refresh()
     }
 
-    func disableClaude() {
-        claudeEnabled = false
-        UserDefaults.standard.set(false, forKey: "claudeEnabled")
-        claude = nil
-        claudeError = nil
-        onChange?()
-    }
 }
 
 private let codexAccent = Color(red: 0.18, green: 0.66, blue: 0.49)
@@ -101,7 +110,6 @@ private struct ProviderIcon: View {
         Image(nsImage: name == "Codex" ? (colorScheme == .dark ? ProviderImages.codexDark : ProviderImages.codexLight) : ProviderImages.claude)
             .resizable().interpolation(.high).scaledToFit()
             .frame(width: 26, height: 26)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
             .accessibilityHidden(true)
     }
 }
@@ -147,7 +155,19 @@ struct LimitsPanel: View {
 
             HStack(spacing: 6) {
                 Image(systemName: "clock.arrow.circlepath")
-                Text("5 dakikada bir güncellenir")
+                Menu {
+                    Picker("Otomatik güncelleme", selection: Binding(
+                        get: { store.refreshMinutes }, set: { store.setRefreshMinutes($0) })) {
+                        ForEach(1...10, id: \.self) { minutes in
+                            Text("\(minutes) dakika").tag(minutes)
+                        }
+                    }
+                } label: {
+                    Text("\(store.refreshMinutes) dakikada bir güncellenir")
+                }
+                .menuStyle(.borderlessButton).fixedSize()
+                .help("Otomatik güncelleme aralığını seç (1–10 dakika)")
+                .accessibilityLabel("Otomatik güncelleme: \(store.refreshMinutes) dakika")
                 Spacer()
                 Button { store.refresh(manual: true) } label: {
                     Image(systemName: "arrow.clockwise")
@@ -157,10 +177,6 @@ struct LimitsPanel: View {
                 .help("Şimdi yenile (en sık 30 saniyede bir)")
                 .accessibilityLabel("Limitleri şimdi yenile")
                 Menu {
-                    if store.claudeEnabled {
-                        Button("Claude bağlantısını kapat") { store.disableClaude() }
-                        Divider()
-                    }
                     Button("Çıkış") { NSApp.terminate(nil) }.keyboardShortcut("q")
                 } label: { Image(systemName: "ellipsis.circle") }
                 .menuStyle(.borderlessButton).fixedSize()
@@ -275,6 +291,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             if let button = item.button {
                 let icon = image.copy() as! NSImage
                 icon.size = NSSize(width: 18, height: 18)
+                icon.isTemplate = name == "Codex"
                 button.image = icon
                 button.imagePosition = .imageLeading
                 button.imageScaling = .scaleProportionallyDown

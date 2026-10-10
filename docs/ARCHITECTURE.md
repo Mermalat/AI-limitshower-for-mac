@@ -16,7 +16,7 @@
 
 `TopBarApp.main()` bir `NSApplication` açar, `.accessory` ilkesiyle Dock simgesini gizler ve `AppDelegate` nesnesini uygulama çalıştığı sürece tutar. Aynı paket kimliğiyle ikinci kopya açılmışsa yeni kopya kapanır.
 
-`AppDelegate.applicationDidFinishLaunching()` Codex ve Claude için iki `NSStatusItem` oluşturur. Her öğenin kalıcı `autosaveName` değeri vardır. Simgeler paket içindeki PNG dosyalarından yüklenir. `UsageStore.start()` veri okumayı ve 300 saniyelik zamanlayıcıyı başlatır.
+`AppDelegate.applicationDidFinishLaunching()` Codex ve Claude için iki `NSStatusItem` oluşturur. Her öğenin kalıcı `autosaveName` değeri vardır. Simgeler paket içindeki PNG dosyalarından yüklenir. `UsageStore.start()` veri okumayı ve seçilmiş dakika aralığındaki zamanlayıcıyı başlatır. `refreshMinutes` tercihi 1–10 aralığında değilse varsayılan 5 dakika kullanılır. `setRefreshMinutes()` seçimi kaydeder, önceki zamanlayıcıyı iptal eder ve yeni zamanlayıcıyı başlatır.
 
 Menü öğelerinden birini tıklamak ortak `NSPopover` panelini açar veya kapatır. Panel bir `NSHostingController` içindeki SwiftUI `LimitsPanel` görünümüdür. Yükseklik açılışta ekran alanına göre sabitlenir; sonradan gelen veriler pencereyi büyütmek yerine kaydırılabilir içerik oluşturur. `PanelPlacement.fit()` pencereyi ekranın `visibleFrame` alanının sekiz piksel içine sığdırır. Farklı monitör başlangıç koordinatları da hesaba katılır.
 
@@ -50,9 +50,9 @@ Yalnızca `claudeAiOauth.accessToken` kullanılır. Boş veya satır sonu içere
 
 `UsageStore` ana aktörde çalışır ve `@Published` alanlarla paneli günceller. Sağlayıcı işleri `Task.detached(priority: .utility)` ile arka plana alınır. Her sağlayıcı için yükleniyor bayrağı yinelenen sorguyu engeller. Manuel yenilemenin 30 saniyelik sınırı otomatik zamanlayıcıdan ayrıdır.
 
-Son başarılı anlık görüntü ve hata bellekte tutulur. Yeni okuma başarısız olursa eski görüntü korunur ve `!` / **Eski veri** olarak işaretlenir. Bağlantı kapatıldıktan sonra tamamlanan Claude sorgusunun sonucu gösterilmez. Çalışmakta olan HTTP isteği anında iptal edilmez.
+Son başarılı anlık görüntü ve hata bellekte tutulur. Yeni okuma başarısız olursa eski görüntü korunur ve `!` / **Eski veri** olarak işaretlenir.
 
-`UserDefaults` yalnızca Claude bağlantı tercihini tutar; AppKit ayrıca menü öğesi konumlarını yönetebilir. Kullanım yüzdeleri veya token uygulama tarafından diske yazılmaz. Uygulama mevcut oturum dosyalarını değiştirmez ve token yenilemez.
+`UserDefaults` Claude bağlantı tercihini ve otomatik güncelleme aralığını tutar; AppKit ayrıca menü öğesi konumlarını yönetebilir. Kullanım yüzdeleri veya token uygulama tarafından diske yazılmaz. Uygulama mevcut oturum dosyalarını değiştirmez ve token yenilemez.
 
 ## Sınırlar ve güven varsayımları
 

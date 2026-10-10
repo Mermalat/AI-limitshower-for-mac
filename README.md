@@ -24,7 +24,7 @@ Kaynaklardan tekrar derlemek: `./build.sh`. Apple Command Line Tools (`xcode-sel
 
 ## Gösterge
 
-- Menü çubuğunda Codex ve Claude için iki ayrı standart gösterge bulunur; ikisinden birini tıklayarak paneli açabilirsin. Menü çubuğunda ve panelde orijinal simgeler kullanılır. Yüzdeler **kalan** kotadır. Simgeler kurulu resmî uygulamaların kaynaklarından alınarak `Assets/` içinde saklanır.
+- Menü çubuğunda Codex ve Claude için iki ayrı standart gösterge bulunur; ikisinden birini tıklayarak paneli açabilirsin. Menü çubuğunda ve panelde orijinal simgeler kullanılır. Yüzdeler **kalan** kotadır. Simgeler sağlanan `codex-2.svg` ve `claude-code.svg` dosyalarından oluşturulur; SVG kaynakları ve PNG karşılıkları `Assets/` içinde saklanır.
 - Menü çubuğunda kısa dönem ve haftalık genel limitlerden **en düşük kalan yüzde** görünür. İkisinden herhangi biri tükenirse o sağlayıcı için gösterge %0 olur.
 - Panelde her pencere ayrı görünür. Claude verisinde varsa Sonnet ve Opus haftalık limitleri de listelenir.
 - Yeşil / bakır normal, turuncu %30 ve altı, kırmızı %10 ve altı kalan kotadır.
@@ -32,7 +32,7 @@ Kaynaklardan tekrar derlemek: `./build.sh`. Apple Command Line Tools (`xcode-sel
 - `!`: son başarılı okuma gösteriliyor; yeni sorgu başarısız oldu. Panelde “Eski veri” ve son başarılı güncelleme saati bulunur.
 - Yenilenme saatleri Mac’in yerel saat dilimindedir. Yenilenme zamanı geçince uygulama yeni veri gelmeden kotayı kendiliğinden %100 yapmaz.
 
-Uygulama açıldığında ve ardından beş dakikada bir limitleri sorgular. Yenile düğmesi en sık 30 saniyede bir çalışır. Claude HTTP 429 döndürürse en az beş dakika ve varsa daha uzun `Retry-After` süresi boyunca manuel sorgular da bekletilir. Sonuçlar yalnızca bellekte saklanır.
+Uygulama açıldığında ve ardından seçtiğin aralıkta limitleri sorgular. Panelin altındaki güncelleme yazısını tıklayarak 1–10 dakika arasında seçim yapabilirsin; varsayılan 5 dakikadır. Seçim yeniden açılışta korunur; değiştirince yeni süre o andan itibaren başlar. Yenile düğmesi en sık 30 saniyede bir çalışır. Claude HTTP 429 döndürürse en az beş dakika ve varsa daha uzun `Retry-After` süresi boyunca manuel sorgular da bekletilir. Sonuçlar yalnızca bellekte saklanır.
 
 Panelin yüksekliği açılışta ekranın kullanılabilir alanına göre sabitlenir; limitler geldikçe pencere yukarı taşmaz. Uzun içerik kaydırılabilir ve panelin konumu ekran sınırları içinde tutulur.
 
@@ -40,7 +40,7 @@ Panelin yüksekliği açılışta ekranın kullanılabilir alanına göre sabitl
 
 **Codex:** kurulu `codex` üzerinden `app-server` başlatılır, `initialize` / `initialized` sonrasında yalnızca `account/rateLimits/read` çağrılır. Her okumadan sonra alt süreç kapatılır; konuşma, model isteği veya limit sıfırlama işlemi başlatılmaz. Önceden Codex’e ChatGPT hesabınla giriş yapmış olmalısın. API anahtarıyla çalışan hesapların abonelik limitleri bulunmayabilir.
 
-**Claude:** ilk açılışta bağlantı kapalıdır. Panelde **Claude bağlantısını etkinleştir** düğmesini kullanarak mevcut Claude Code oturum token’ının Anthropic’in kullanım servisine gönderilmesine izin verirsin. Bu tercih macOS uygulama tercihlerine kaydedilir. Menüdeki **Claude bağlantısını kapat** seçeneği gelecekteki sorguları durdurur ve gösterilen veriyi temizler; başlamış bir sorgu tamamlanabilir, ancak sonucu gösterilmez.
+**Claude:** ilk açılışta bağlantı kapalıdır. Panelde **Claude bağlantısını etkinleştir** düğmesini kullanarak mevcut Claude Code oturum token’ının Anthropic’in kullanım servisine gönderilmesine izin verirsin. Bu tercih macOS uygulama tercihlerine kaydedilir.
 
 Claude bağlantısı etkin olduğunda `~/.claude/.credentials.json` (varsa `CLAUDE_CONFIG_DIR` altı) veya macOS Anahtar Zinciri’ndeki `Claude Code-credentials` öğesi yalnızca okunur. Sadece `claudeAiOauth.accessToken` kullanılır; MCP sunucularının token’ları kullanılmaz. Token yalnızca `https://api.anthropic.com/api/oauth/usage` adresine gönderilir; HTTP yönlendirmeleri takip edilmez. Token dosyaya, uygulama tercihlerine veya günlüğe yazılmaz. Yeni kimlik bilgisi oluşturulmaz; Claude’un mevcut kimlik bilgileri değiştirilmez. Gerektiğinde macOS Anahtar Zinciri erişim istemi çıkabilir.
 

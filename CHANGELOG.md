@@ -1,5 +1,11 @@
 # Sürüm notları
 
+## Yayımlanmamış
+
+- Codex ve Claude Code simgeleri sağlanan SVG logolarıyla değiştirildi.
+- Uygulama menüsünden Claude bağlantısını kapatma seçeneği kaldırıldı.
+- Otomatik güncelleme aralığı panelden 1–10 dakika arasında seçilebilir ve yeniden açılışta korunur.
+
 ## 1.0.0 — 2026-10-10
 
 İlk yayın.
