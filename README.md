@@ -4,7 +4,7 @@ macOS menü çubuğunda Codex ve Claude aboneliğinin kalan limitlerini göstere
 
 ## DMG ile kurulum
 
-[Releases](https://github.com/Mermalat/AI-limitshower-for-mac/releases) bölümünden `TopBarClaudeCodexLimits-1.0.0-universal.dmg` dosyasını indir, aç ve uygulamayı **Applications / Uygulamalar** klasörüne sürükle. Uygulamayı bu klasörden aç; Dock simgesi bulunmaz, menü çubuğunda iki gösterge görünür.
+[Releases](https://github.com/Mermalat/AI-limitshower-for-mac/releases) bölümünden `TopBarClaudeCodexLimits-1.1.0-universal.dmg` dosyasını indir, aç ve uygulamayı **Applications / Uygulamalar** klasörüne sürükle. Uygulamayı bu klasörden aç; Dock simgesi bulunmaz, menü çubuğunda iki gösterge görünür.
 
 Bu sürüm yerel olarak imzalanmıştır; Developer ID imzası ve Apple noter onayı içermez. Başka bir Mac’te ilk açılışta Gatekeeper uyarısı çıkabilir. Ayrıntılar ve Apple’ın resmî yönergesi [kurulum rehberinde](docs/INSTALL.md) bulunur. Codex CLI / Claude Code pakete dahil değildir; mevcut oturumların gerekir.
 

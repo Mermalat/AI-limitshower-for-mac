@@ -1,6 +1,6 @@
 # Sürüm notları
 
-## Yayımlanmamış
+## 1.1.0 — 2026-10-10
 
 - Codex ve Claude Code simgeleri sağlanan SVG logolarıyla değiştirildi.
 - Uygulama menüsünden Claude bağlantısını kapatma seçeneği kaldırıldı.
