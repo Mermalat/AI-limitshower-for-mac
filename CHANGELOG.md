@@ -1,5 +1,13 @@
 # Sürüm notları
 
+## 1.2.0 — 2026-10-12
+
+- Codex ve Claude ayrı ayrı açılıp kapatılabilir; son açık sağlayıcı kapatılamaz.
+- Kapalı sağlayıcının menü çubuğu göstergesi ve kartı gizlenir, yeni sorguları durur; seçimler yeniden açılışta korunur.
+- Panel tek sağlayıcıda küçülür, ikinci sağlayıcı açıldığında büyür. Eski yüksekliğin korunması hatası doğrudan AppKit boyutlandırmasıyla düzeltildi; uzun içerik ekran sınırında kaydırılır.
+- Türkçe, İngilizce, İspanyolca, Japonca, basitleştirilmiş Çince, Almanca ve Fransızca dil seçimi eklendi. Metinler, hata mesajları ve tarihler seçilen dile uyarlanır; dil tercihi kaydedilir.
+- Gerçek pencere küçülme/büyüme, ekran yüksekliği sınırı, sağlayıcı koruması ve yedi dil için testler eklendi.
+
 ## 1.1.0 — 2026-10-10
 
 - Codex ve Claude Code simgeleri sağlanan SVG logolarıyla değiştirildi.

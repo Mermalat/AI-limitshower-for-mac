@@ -23,7 +23,7 @@ Bu çıktı `build/universal/TopBarClaudeCodexLimits.app` içinde oluşur; yerel
 ./test.sh
 ```
 
-Kontroller XCTest yerine küçük bir komut satırı test programındaki assert’lerle yapılır. Testler yüzde hesabı, JSON biçimleri, zaman damgaları, eksik ve bozuk veri, kimlik bilgisi seçimi, token süresi, satırlı süreç yanıtları, zaman aşımı ve panel konumlarını kapsar. Gerçek token fixture olarak kullanılmaz.
+Kontroller XCTest yerine küçük bir komut satırı test programındaki assert’lerle yapılır. Testler yüzde hesabı, JSON biçimleri, zaman damgaları, eksik ve bozuk veri, kimlik bilgisi seçimi, token süresi, satırlı süreç yanıtları, zaman aşımı panel konumlarını, tek sağlayıcı korumasını, kalıcı tercihleri ve yedi dilin çeviri biçimlerini kapsar. Gerçek token fixture olarak kullanılmaz.
 
 ```sh
 ./test.sh --live-codex

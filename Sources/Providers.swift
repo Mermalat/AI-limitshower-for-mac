@@ -24,7 +24,7 @@ final class PipeProcess {
         environment["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
         process.environment = environment
         do { try process.run() }
-        catch { throw UsageError.message("\(URL(fileURLWithPath: path).lastPathComponent) başlatılamadı.") }
+        catch { throw UsageError.formatted("%@ başlatılamadı.", URL(fileURLWithPath: path).lastPathComponent) }
         // Close the parent's write end so a child exit produces EOF on stdout.
         output.fileHandleForWriting.closeFile()
         input.fileHandleForReading.closeFile()
@@ -151,7 +151,7 @@ enum Providers {
         case 429:
             let seconds = max(300, Double(http.value(forHTTPHeaderField: "Retry-After") ?? "") ?? 300)
             throw UsageError.rateLimited(Date().addingTimeInterval(seconds))
-        default: throw UsageError.message("Claude geçici olarak kullanılamıyor (HTTP \(http.statusCode)).")
+        default: throw UsageError.formatted("Claude geçici olarak kullanılamıyor (HTTP %@).", String(http.statusCode))
         }
     }
 }

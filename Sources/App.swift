@@ -9,19 +9,61 @@ import Darwin
 final class UsageStore: ObservableObject {
     @Published var codex: UsageSnapshot?
     @Published var claude: UsageSnapshot?
-    @Published var codexError: String?
-    @Published var claudeError: String?
+    @Published var codexError: Error?
+    @Published var claudeError: Error?
     @Published var codexLoading = false
     @Published var claudeLoading = false
-    @Published var claudeEnabled = UserDefaults.standard.bool(forKey: "claudeEnabled")
-    @Published private(set) var refreshMinutes: Int = {
-        let saved = UserDefaults.standard.integer(forKey: "refreshMinutes")
-        return (1...10).contains(saved) ? saved : 5
-    }()
+    @Published private(set) var claudeEnabled: Bool
+    @Published private(set) var codexVisible: Bool
+    @Published private(set) var claudeVisible: Bool
+    @Published private(set) var language: AppLanguage
+    private let defaults: UserDefaults
+    private var codexRevision = 0
+    private var claudeRevision = 0
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        language = AppLanguage(rawValue: defaults.string(forKey: "language") ?? "tr") ?? .tr
+        claudeEnabled = defaults.bool(forKey: "claudeEnabled")
+        codexVisible = defaults.object(forKey: "codexVisible") as? Bool ?? true
+        claudeVisible = defaults.object(forKey: "claudeVisible") as? Bool ?? true
+        let minutes = defaults.integer(forKey: "refreshMinutes")
+        refreshMinutes = (1...10).contains(minutes) ? minutes : 5
+        if !codexVisible && !claudeVisible {
+            codexVisible = true
+            defaults.set(true, forKey: "codexVisible")
+        }
+    }
+
+    func setCodexVisible(_ visible: Bool) {
+        guard visible != codexVisible, visible || claudeVisible else { return }
+        codexVisible = visible
+        codexRevision += 1
+        defaults.set(visible, forKey: "codexVisible")
+        if visible { refresh() } else { codex = nil; codexError = nil }
+        onChange?()
+    }
+
+    func setClaudeVisible(_ visible: Bool) {
+        guard visible != claudeVisible, visible || codexVisible else { return }
+        claudeVisible = visible
+        claudeRevision += 1
+        defaults.set(visible, forKey: "claudeVisible")
+        if visible { refresh() } else { claude = nil; claudeError = nil }
+        onChange?()
+    }
+    @Published private(set) var refreshMinutes: Int
     var onChange: (() -> Void)?
     private var timer: Timer?
     private var claudeRetryAt = Date.distantPast
     private var lastManualRefresh = Date.distantPast
+
+    func setLanguage(_ language: AppLanguage) {
+        guard language != self.language else { return }
+        self.language = language
+        defaults.set(language.rawValue, forKey: "language")
+        onChange?()
+    }
 
     func start() {
         refresh()
@@ -31,7 +73,7 @@ final class UsageStore: ObservableObject {
     func setRefreshMinutes(_ minutes: Int) {
         guard (1...10).contains(minutes), minutes != refreshMinutes else { return }
         refreshMinutes = minutes
-        UserDefaults.standard.set(minutes, forKey: "refreshMinutes")
+        defaults.set(minutes, forKey: "refreshMinutes")
         scheduleRefresh()
     }
 
@@ -47,26 +89,30 @@ final class UsageStore: ObservableObject {
             guard Date().timeIntervalSince(lastManualRefresh) >= 30 else { return }
             lastManualRefresh = Date()
         }
-        if !codexLoading {
+        if codexVisible && !codexLoading {
             codexLoading = true
+            let revision = codexRevision
             Task {
                 do {
-                    codex = try await Task.detached(priority: .utility) { try Providers.codex() }.value
-                    codexError = nil
-                } catch { codexError = error.localizedDescription }
+                    let snapshot = try await Task.detached(priority: .utility) { try Providers.codex() }.value
+                    if codexVisible && revision == codexRevision { codex = snapshot; codexError = nil }
+                } catch {
+                    if codexVisible && revision == codexRevision { codexError = error }
+                }
                 codexLoading = false
                 onChange?()
             }
         }
-        if claudeEnabled && !claudeLoading && Date() >= claudeRetryAt {
+        if claudeVisible && claudeEnabled && !claudeLoading && Date() >= claudeRetryAt {
             claudeLoading = true
+            let revision = claudeRevision
             Task {
                 do {
                     let snapshot = try await Task.detached(priority: .utility) { try await Providers.claude() }.value
-                    if claudeEnabled { claude = snapshot; claudeError = nil }
+                    if claudeVisible && revision == claudeRevision { claude = snapshot; claudeError = nil }
                 } catch {
-                    if claudeEnabled {
-                        claudeError = error.localizedDescription
+                    if claudeVisible && revision == claudeRevision {
+                        claudeError = error
                         if case UsageError.rateLimited(let date) = error { claudeRetryAt = date }
                     }
                 }
@@ -79,7 +125,7 @@ final class UsageStore: ObservableObject {
 
     func enableClaude() {
         claudeEnabled = true
-        UserDefaults.standard.set(true, forKey: "claudeEnabled")
+        defaults.set(true, forKey: "claudeEnabled")
         refresh()
     }
 
@@ -116,13 +162,14 @@ private struct ProviderIcon: View {
 
 struct LimitsPanel: View {
     @ObservedObject var store: UsageStore
+    private var language: AppLanguage { store.language }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Kullanım durumu").font(.system(size: 21, weight: .semibold))
-                    Text("Codex ve Claude · kalan kota").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(L10n.text("Kullanım durumu", language)).font(.system(size: 21, weight: .semibold))
+                    Text(L10n.text("%@ · kalan kota", language, store.codexVisible ? (store.claudeVisible ? L10n.text("Codex ve Claude", language) : "Codex") : "Claude")).font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image(systemName: "gauge.with.dots.needle.50percent")
@@ -130,57 +177,76 @@ struct LimitsPanel: View {
                     .accessibilityHidden(true)
             }
 
-            ProviderCard(name: "Codex", accent: codexAccent, snapshot: store.codex,
-                         error: store.codexError, loading: store.codexLoading,
-                         usageURL: "https://chatgpt.com/codex/settings/usage")
+            if store.codexVisible {
+                ProviderCard(name: "Codex", language: language, accent: codexAccent, snapshot: store.codex,
+                             error: store.codexError, loading: store.codexLoading,
+                             usageURL: "https://chatgpt.com/codex/settings/usage")
+            }
 
-            if store.claudeEnabled {
-                ProviderCard(name: "Claude", accent: claudeAccent, snapshot: store.claude,
-                             error: store.claudeError, loading: store.claudeLoading,
-                             usageURL: "https://claude.ai/settings/usage")
-            } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 9) {
-                        ProviderIcon(name: "Claude")
-                        Text("Claude").font(.system(size: 15, weight: .semibold))
-                        Spacer()
-                        Text("Bağlı değil").font(.system(size: 11)).foregroundStyle(.secondary)
-                    }
-                    Text("Mevcut Claude Code oturumunla limitlerini göster. Bağlantı, oturum token’ını yalnızca Anthropic’in kullanım servisine gönderir.")
-                        .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                    Button("Claude bağlantısını etkinleştir") { store.enableClaude() }
-                        .buttonStyle(.borderedProminent).tint(claudeAccent)
-                }.padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
+            if store.claudeVisible {
+                if store.claudeEnabled {
+                    ProviderCard(name: "Claude", language: language, accent: claudeAccent, snapshot: store.claude,
+                                 error: store.claudeError, loading: store.claudeLoading,
+                                 usageURL: "https://claude.ai/settings/usage")
+                } else {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 9) {
+                            ProviderIcon(name: "Claude")
+                            Text("Claude").font(.system(size: 15, weight: .semibold))
+                            Spacer()
+                            Text(L10n.text("Bağlı değil", language)).font(.system(size: 11)).foregroundStyle(.secondary)
+                        }
+                        Text(L10n.text("Mevcut Claude Code oturumunla limitlerini göster. Bağlantı, oturum token’ını yalnızca Anthropic’in kullanım servisine gönderir.", language))
+                            .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        Button(L10n.text("Claude bağlantısını etkinleştir", language)) { store.enableClaude() }
+                            .buttonStyle(.borderedProminent).tint(claudeAccent)
+                    }.padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
+                }
             }
 
             HStack(spacing: 6) {
                 Image(systemName: "clock.arrow.circlepath")
                 Menu {
-                    Picker("Otomatik güncelleme", selection: Binding(
+                    Picker(L10n.text("Otomatik güncelleme", language), selection: Binding(
                         get: { store.refreshMinutes }, set: { store.setRefreshMinutes($0) })) {
                         ForEach(1...10, id: \.self) { minutes in
-                            Text("\(minutes) dakika").tag(minutes)
+                            Text(L10n.text("%d dakika", language, minutes)).tag(minutes)
                         }
                     }
                 } label: {
-                    Text("\(store.refreshMinutes) dakikada bir güncellenir")
+                    Text(L10n.text("%d dakikada bir güncellenir", language, store.refreshMinutes))
                 }
                 .menuStyle(.borderlessButton).fixedSize()
-                .help("Otomatik güncelleme aralığını seç (1–10 dakika)")
-                .accessibilityLabel("Otomatik güncelleme: \(store.refreshMinutes) dakika")
+                .help(L10n.text("Otomatik güncelleme aralığını seç (1–10 dakika)", language))
+                .accessibilityLabel(L10n.text("%d dakikada bir güncellenir", language, store.refreshMinutes))
                 Spacer()
                 Button { store.refresh(manual: true) } label: {
                     Image(systemName: "arrow.clockwise")
                 }
                 .buttonStyle(.borderless)
-                .disabled(store.codexLoading || store.claudeLoading)
-                .help("Şimdi yenile (en sık 30 saniyede bir)")
-                .accessibilityLabel("Limitleri şimdi yenile")
+                .disabled((store.codexVisible && store.codexLoading) || (store.claudeVisible && store.claudeLoading))
+                .help(L10n.text("Şimdi yenile (en sık 30 saniyede bir)", language))
+                .accessibilityLabel(L10n.text("Limitleri şimdi yenile", language))
                 Menu {
-                    Button("Çıkış") { NSApp.terminate(nil) }.keyboardShortcut("q")
+                    Button(L10n.text(store.codexVisible ? "Codex’i kapat" : "Codex’i aç", language)) {
+                        store.setCodexVisible(!store.codexVisible)
+                    }.disabled(store.codexVisible && !store.claudeVisible)
+                    Button(L10n.text(store.claudeVisible ? "Claude’u kapat" : "Claude’u aç", language)) {
+                        store.setClaudeVisible(!store.claudeVisible)
+                    }.disabled(store.claudeVisible && !store.codexVisible)
+                    Text(L10n.text("En az bir sağlayıcı açık kalmalı", language))
+                    Divider()
+                    Picker(L10n.text("Dil", language), selection: Binding(
+                        get: { store.language }, set: { store.setLanguage($0) })) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.name).tag(language)
+                        }
+                    }
+                    Divider()
+                    Button(L10n.text("Çıkış", language)) { NSApp.terminate(nil) }.keyboardShortcut("q")
                 } label: { Image(systemName: "ellipsis.circle") }
                 .menuStyle(.borderlessButton).fixedSize()
-                .accessibilityLabel("Uygulama menüsü")
+                .accessibilityLabel(L10n.text("Uygulama menüsü", language))
             }.font(.system(size: 11)).foregroundStyle(.secondary)
         }
         .padding(20)
@@ -188,11 +254,47 @@ struct LimitsPanel: View {
     }
 }
 
+struct PanelContent: View {
+    @ObservedObject var store: UsageStore
+
+    var body: some View {
+        ScrollView {
+            LimitsPanel(store: store).fixedSize(horizontal: false, vertical: true)
+        }.frame(width: 370)
+    }
+}
+
+@MainActor
+final class PanelController: NSHostingController<PanelContent> {
+    private let store: UsageStore
+    private let maximumHeight: CGFloat
+    private let onResize: (NSSize) -> Void
+
+    init(store: UsageStore, maximumHeight: CGFloat, onResize: @escaping (NSSize) -> Void) {
+        self.store = store
+        self.maximumHeight = maximumHeight
+        self.onResize = onResize
+        super.init(rootView: PanelContent(store: store))
+        // AppKit owns the viewport size; SwiftUI must not retain an old minimum height.
+        sizingOptions = []
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is unavailable") }
+
+    func resizeToContent() {
+        let measurement = NSHostingView(rootView: LimitsPanel(store: store))
+        let height = min(ceil(measurement.fittingSize.height), maximumHeight)
+        onResize(NSSize(width: 370, height: max(1, height)))
+    }
+}
+
 private struct ProviderCard: View {
     let name: String
+    let language: AppLanguage
     let accent: Color
     let snapshot: UsageSnapshot?
-    let error: String?
+    let error: Error?
     let loading: Bool
     let usageURL: String
 
@@ -208,33 +310,33 @@ private struct ProviderCard: View {
                 Spacer()
                 if loading { ProgressView().controlSize(.small) }
                 else if error != nil {
-                    Text(snapshot == nil ? "Bağlantı yok" : "Eski veri")
+                    Text(L10n.text(snapshot == nil ? "Bağlantı yok" : "Eski veri", language))
                         .font(.system(size: 10, weight: .medium)).foregroundStyle(.orange)
                 } else {
-                    Circle().fill(accent).frame(width: 6, height: 6).accessibilityLabel("Bağlı")
+                    Circle().fill(accent).frame(width: 6, height: 6).accessibilityLabel(L10n.text("Bağlı", language))
                 }
             }
             if let snapshot {
                 ForEach(snapshot.windows) { window in
-                    WindowRow(window: window, accent: accent).opacity(error == nil ? 1 : 0.5)
+                    WindowRow(window: window, language: language, accent: accent).opacity(error == nil ? 1 : 0.5)
                 }
             } else if error == nil {
-                Text("Limitler okunuyor…").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(L10n.text("Limitler okunuyor…", language)).font(.system(size: 12)).foregroundStyle(.secondary)
             }
             if let error {
-                Label(error, systemImage: "exclamationmark.circle")
+                Label(L10n.error(error, language), systemImage: "exclamationmark.circle")
                     .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 if let snapshot {
-                    Text("Güncellendi: \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
+                    Text(L10n.text("Güncellendi: %@", language, snapshot.fetchedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(language.locale))))
                         .font(.system(size: 10)).foregroundStyle(.tertiary)
                 }
                 Spacer()
                 Link(destination: URL(string: usageURL)!) {
                     Image(systemName: "arrow.up.right.square").font(.system(size: 11))
-                }.foregroundStyle(.secondary).help("\(name) kullanım sayfasını aç")
-                    .accessibilityLabel("\(name) kullanım sayfasını aç")
+                }.foregroundStyle(.secondary).help(L10n.text("%@ kullanım sayfasını aç", language, name))
+                    .accessibilityLabel(L10n.text("%@ kullanım sayfasını aç", language, name))
             }
         }.padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
     }
@@ -242,17 +344,18 @@ private struct ProviderCard: View {
 
 private struct WindowRow: View {
     let window: UsageWindow
+    let language: AppLanguage
     let accent: Color
     private var color: Color { window.remaining <= 10 ? .red : window.remaining <= 30 ? .orange : accent }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .firstTextBaseline) {
-                Text(window.title).font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                Text(L10n.windowTitle(window.title, language)).font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                 Spacer()
                 Text(window.percentText).font(.system(size: 22, weight: .semibold, design: .rounded))
                     .monospacedDigit().foregroundStyle(color)
-                Text("kaldı").font(.system(size: 10)).foregroundStyle(.secondary)
+                Text(L10n.text("kaldı", language)).font(.system(size: 10)).foregroundStyle(.secondary)
             }
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
@@ -262,12 +365,12 @@ private struct WindowRow: View {
             }.frame(height: 5).accessibilityHidden(true)
             if let reset = window.reset {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
-                    Text(reset > context.date ? "Yenilenme: \(reset.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(Locale(identifier: "tr_TR"))))" : "Yenilenme zamanı geldi · güncelleme bekleniyor")
+                    Text(reset > context.date ? L10n.text("Yenilenme: %@", language, reset.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(language.locale))) : L10n.text("Yenilenme zamanı geldi · güncelleme bekleniyor", language))
                         .font(.system(size: 10)).foregroundStyle(.tertiary)
                 }
             }
         }.accessibilityElement(children: .combine)
-            .help("Kullanılan: \(Int(min(100, window.used).rounded()))%")
+            .help(L10n.text("Kullanılan: %d%%", language, Int(min(100, window.used).rounded())))
     }
 }
 
@@ -315,33 +418,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func updateTitle() {
-        func text(_ snapshot: UsageSnapshot?, _ error: String?) -> String {
+        func text(_ snapshot: UsageSnapshot?, _ error: Error?) -> String {
             guard let remaining = snapshot?.remaining else { return "—" }
             return "\(Int(remaining.rounded()))%" + (error == nil ? "" : "!")
+        }
+        let visibility = [store.codexVisible, store.claudeVisible]
+        if popover.isShown, let anchorButton,
+           let index = statusItems.firstIndex(where: { $0.button === anchorButton }), !visibility[index] {
+            self.anchorButton = statusItems[visibility.firstIndex(of: true)!].button
+            if let button = self.anchorButton {
+                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            }
         }
         for (index, provider) in [("Codex", store.codex, store.codexError),
                                    ("Claude", store.claude, store.claudeError)].enumerated() {
             let (name, snapshot, error) = provider
             let value = text(snapshot, error)
+            statusItems[index].isVisible = visibility[index]
             let button = statusItems[index].button
             button?.title = " " + value
-            button?.toolTip = "\(name) · kısa dönem ve haftalık limitlerden en düşük kalan yüzde. ! = eski veri."
-            button?.setAccessibilityLabel("\(name) \(value) kaldı")
+            button?.toolTip = L10n.text("%@ · kısa dönem ve haftalık limitlerden en düşük kalan yüzde. ! = eski veri.", store.language, name)
+            button?.setAccessibilityLabel(L10n.text("%@ %@ kaldı", store.language, name, value))
         }
-        if popover.isShown { positionPanelOnScreen() }
+        if popover.isShown {
+            (popover.contentViewController as? PanelController)?.resizeToContent()
+            positionPanelOnScreen()
+        }
     }
 
     @objc private func togglePanel(_ sender: NSStatusBarButton?) {
-        guard let button = sender ?? statusItems.first?.button else { return }
+        guard let button = sender ?? statusItems.first(where: { $0.isVisible })?.button else { return }
         if popover.isShown { popover.performClose(nil) }
         else {
             anchorButton = button
             guard let screen = button.window?.screen ?? NSScreen.main else { return }
-            // Keep the window height stable while asynchronous usage data adds rows.
-            let height = min(560, screen.visibleFrame.height - 48)
-            popover.contentViewController = NSHostingController(rootView:
-                ScrollView { LimitsPanel(store: store) }.frame(width: 370, height: height))
-            popover.contentSize = NSSize(width: 370, height: height)
+            let maximum = screen.visibleFrame.height - 48
+            let controller = PanelController(store: store, maximumHeight: maximum) { [weak self] size in
+                self?.popover.contentSize = size
+            }
+            popover.contentViewController = controller
+            controller.resizeToContent()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
     }
@@ -369,6 +485,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 }
 
+#if !TESTING
 @main
 enum TopBarApp {
     static func main() {
@@ -380,3 +497,5 @@ enum TopBarApp {
         withExtendedLifetime(delegate) { application.run() }
     }
 }
+
+#endif

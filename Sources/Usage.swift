@@ -28,9 +28,11 @@ struct UsageSnapshot {
 
 enum UsageError: LocalizedError {
     case message(String)
+    case formatted(String, String)
     case rateLimited(Date)
     var errorDescription: String? {
         if case .message(let text) = self { return text }
+        if case .formatted(let format, let value) = self { return String(format: format, value) }
         return "Sunucu çok sık sorgulandı. Bir süre sonra otomatik tekrar denenecek."
     }
 }

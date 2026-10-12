@@ -1,10 +1,10 @@
 # Claude & Codex Limits
 
-macOS menü çubuğunda Codex ve Claude aboneliğinin kalan limitlerini gösteren, Swift / SwiftUI / AppKit ile yazılmış bağımsız uygulama. macOS 13 veya üzeri gerekir. DMG hem Apple Silicon hem Intel mimarilerini içerir. Arayüz Türkçedir.
+macOS menü çubuğunda Codex ve Claude aboneliğinin kalan limitlerini gösteren, Swift / SwiftUI / AppKit ile yazılmış bağımsız uygulama. macOS 13 veya üzeri gerekir. DMG hem Apple Silicon hem Intel mimarilerini içerir. Arayüz Türkçe, İngilizce, İspanyolca, Japonca, basitleştirilmiş Çince, Almanca ve Fransızca destekler. Üç nokta menüsündeki dil seçimi kaydedilir.
 
 ## DMG ile kurulum
 
-[Releases](https://github.com/Mermalat/AI-limitshower-for-mac/releases) bölümünden `TopBarClaudeCodexLimits-1.1.0-universal.dmg` dosyasını indir, aç ve uygulamayı **Applications / Uygulamalar** klasörüne sürükle. Uygulamayı bu klasörden aç; Dock simgesi bulunmaz, menü çubuğunda iki gösterge görünür.
+[Releases](https://github.com/Mermalat/AI-limitshower-for-mac/releases) bölümünden `TopBarClaudeCodexLimits-1.2.0-universal.dmg` dosyasını indir, aç ve uygulamayı **Applications / Uygulamalar** klasörüne sürükle. Uygulamayı bu klasörden aç; Dock simgesi bulunmaz, menü çubuğunda iki gösterge görünür.
 
 Bu sürüm yerel olarak imzalanmıştır; Developer ID imzası ve Apple noter onayı içermez. Başka bir Mac’te ilk açılışta Gatekeeper uyarısı çıkabilir. Ayrıntılar ve Apple’ın resmî yönergesi [kurulum rehberinde](docs/INSTALL.md) bulunur. Codex CLI / Claude Code pakete dahil değildir; mevcut oturumların gerekir.
 
@@ -34,7 +34,7 @@ Kaynaklardan tekrar derlemek: `./build.sh`. Apple Command Line Tools (`xcode-sel
 
 Uygulama açıldığında ve ardından seçtiğin aralıkta limitleri sorgular. Panelin altındaki güncelleme yazısını tıklayarak 1–10 dakika arasında seçim yapabilirsin; varsayılan 5 dakikadır. Seçim yeniden açılışta korunur; değiştirince yeni süre o andan itibaren başlar. Yenile düğmesi en sık 30 saniyede bir çalışır. Claude HTTP 429 döndürürse en az beş dakika ve varsa daha uzun `Retry-After` süresi boyunca manuel sorgular da bekletilir. Sonuçlar yalnızca bellekte saklanır.
 
-Panelin yüksekliği açılışta ekranın kullanılabilir alanına göre sabitlenir; limitler geldikçe pencere yukarı taşmaz. Uzun içerik kaydırılabilir ve panelin konumu ekran sınırları içinde tutulur.
+Panelin yüksekliği görünen içeriğe göre ayarlanır: tek sağlayıcıda küçülür, ikinci sağlayıcı açıldığında büyür. Dil değişimindeki satır kaydırmaları da hesaba katılır. Ekrana sığmayan içerik kaydırılabilir; panel ekran sınırları içinde kalır.
 
 ## Hesap bağlantıları
 
@@ -55,6 +55,10 @@ Claude kullanım uç noktası resmî olarak belgelenmiş bir genel API değildir
 `./test.sh --live-codex` ayrıca mevcut Codex hesabından canlı limitleri okur. Test çıktısında kimlik bilgileri bulunmaz.
 
 Bu Mac’te eski `local.TopBarClaudeCodexLimits` kimliğiyle menü öğeleri görünmüyordu: aynı minimal test, farklı kimlikle ekrana yerleşirken eski kimlikle ekran dışına düşüyordu. Uygulamanın kalıcı kimliği `com.mermalat.TopBarClaudeCodexLimits` olarak düzeltildi ve her iki göstergenin ekran içindeki konumu canlı olarak doğrulandı. Bu macOS kayıt sorunu ağsız birim testleriyle yakalanamaz; arayüzde ayrıca kontrol edilmelidir.
+
+## Sağlayıcı seçimi
+
+Panelin sağ altındaki üç nokta menüsünden **Codex’i kapat / aç** ve **Claude’u kapat / aç** seçeneklerini kullanabilirsin. Kapalı sağlayıcının menü çubuğu göstergesi ve kartı gizlenir, yeni sorguları durur. En az bir sağlayıcı açık kalır; son açık sağlayıcının kapatma seçeneği pasiftir. Seçimler yeniden açılışta korunur. Claude göstergesini açmak bağlantı izni vermez; ilk bağlantı için paneldeki etkinleştirme düğmesini kullanmalısın. Önceden verilmiş bağlantı izni korunur.
 
 ## Başlangıç ve çıkış
 

@@ -18,7 +18,7 @@
 
 `AppDelegate.applicationDidFinishLaunching()` Codex ve Claude için iki `NSStatusItem` oluşturur. Her öğenin kalıcı `autosaveName` değeri vardır. Simgeler paket içindeki PNG dosyalarından yüklenir. `UsageStore.start()` veri okumayı ve seçilmiş dakika aralığındaki zamanlayıcıyı başlatır. `refreshMinutes` tercihi 1–10 aralığında değilse varsayılan 5 dakika kullanılır. `setRefreshMinutes()` seçimi kaydeder, önceki zamanlayıcıyı iptal eder ve yeni zamanlayıcıyı başlatır.
 
-Menü öğelerinden birini tıklamak ortak `NSPopover` panelini açar veya kapatır. Panel bir `NSHostingController` içindeki SwiftUI `LimitsPanel` görünümüdür. Yükseklik açılışta ekran alanına göre sabitlenir; sonradan gelen veriler pencereyi büyütmek yerine kaydırılabilir içerik oluşturur. `PanelPlacement.fit()` pencereyi ekranın `visibleFrame` alanının sekiz piksel içine sığdırır. Farklı monitör başlangıç koordinatları da hesaba katılır.
+Menü öğelerinden birini tıklamak ortak `NSPopover` panelini açar veya kapatır. Panel bir `NSHostingController` içindeki SwiftUI `LimitsPanel` görünümüdür. `PanelController.resizeToContent()` tam içeriği ayrı bir `NSHostingView` üzerinden ölçer ve AppKit panel boyutunu ekranın kullanılabilir yüksekliğine kadar büyütür veya küçültür. `PanelContent` yalnızca kaydırılabilir görünümü sağlar; sabit yükseklik veya SwiftUI ölçüm bildirimi kullanmaz. Hosting controller’ın otomatik boyut sınırları kapalıdır; eski minimum yükseklik korunmaz. Sağlayıcı veya dil değişimleri aynı ölçüm yolunu kullanır; sığmayan içerik kaydırılır. `PanelPlacement.fit()` pencereyi ekranın `visibleFrame` alanının sekiz piksel içine sığdırır. Farklı monitör başlangıç koordinatları da hesaba katılır.
 
 ## Veri modeli
 
@@ -52,7 +52,9 @@ Yalnızca `claudeAiOauth.accessToken` kullanılır. Boş veya satır sonu içere
 
 Son başarılı anlık görüntü ve hata bellekte tutulur. Yeni okuma başarısız olursa eski görüntü korunur ve `!` / **Eski veri** olarak işaretlenir.
 
-`UserDefaults` Claude bağlantı tercihini ve otomatik güncelleme aralığını tutar; AppKit ayrıca menü öğesi konumlarını yönetebilir. Kullanım yüzdeleri veya token uygulama tarafından diske yazılmaz. Uygulama mevcut oturum dosyalarını değiştirmez ve token yenilemez.
+`UserDefaults` sağlayıcıların görünürlüğünü, Claude bağlantı tercihini, otomatik güncelleme aralığını ve dil seçimini tutar; AppKit ayrıca menü öğesi konumlarını yönetebilir. Kullanım yüzdeleri veya token uygulama tarafından diske yazılmaz. Uygulama mevcut oturum dosyalarını değiştirmez ve token yenilemez.
+
+Sağlayıcı görünürlüğü yalnızca `setCodexVisible()` / `setClaudeVisible()` üzerinden değiştirilir; son açık sağlayıcı kapatılamaz. Kayıtlı iki tercih de kapalıysa başlangıçta Codex açılarak kayıt onarılır. Kapalı sağlayıcı için yeni sorgu başlatılmaz. Devam eden sorgu tamamlanabilir; görünürlük değişiminden önce başlayan sorguların sonucu veya hatası uygulanmaz. Panelin dayandığı menü öğesi gizleniyorsa panelin dayanağı açık kalan öğeye taşınır.
 
 ## Sınırlar ve güven varsayımları
 
@@ -62,3 +64,7 @@ Son başarılı anlık görüntü ve hata bellekte tutulur. Yeni okuma başarıs
 - HTTP 429 bekleme süresi uygulama yeniden başlatıldığında sıfırlanır.
 - macOS menü öğelerini boş alan veya kullanıcı ayarları nedeniyle gizleyebilir; yalnızca bir sürecin çalışması görünürlüğü kanıtlamaz.
 - Apple Silicon’da canlı kullanım doğrulandı. Intel dilimi derlenir ve paket yapısı kontrol edilir; Intel donanımında canlı test yapılmadı.
+
+## Yerelleştirme
+
+`Localization.swift` yedi dilin metinlerini, biçimlendirme yer tutucularını ve tarih yerellerini içerir. `UsageStore.setLanguage()` tercihi kaydeder ve görünümü günceller. Sağlayıcı hataları metin yerine hata olarak saklanır; mevcut hata ve kota başlıkları dil değiştiğinde yeni bir sorgu gerektirmeden çevrilir. Sistem hataları genel, çevrilmiş bir okuma hatasıyla gösterilir.

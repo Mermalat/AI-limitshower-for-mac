@@ -34,6 +34,14 @@ Claude bağlantısı varsayılan olarak kapalıdır. Panelde **Claude bağlantı
 
 Oturum süresi dolarsa Claude Code’da oturumunu yenileyip uygulamayı tekrar yenile.
 
+## Dil seçimi
+
+Üç nokta menüsündeki **Dil** seçicisinden Türkçe, English, Español, 日本語, 简体中文, Deutsch veya Français seçebilirsin. Seçim hemen uygulanır ve yeniden açılışta korunur; tarihler seçilen dilde gösterilir. Çince seçeneği basitleştirilmiş Çincedir.
+
+## Sağlayıcıları açma ve kapatma
+
+Üç nokta menüsünden Codex veya Claude’u kapatıp yeniden açabilirsin. Kapalı sağlayıcı menü çubuğundan ve panelden gizlenir; yeni kullanım sorguları yapılmaz. Son açık sağlayıcının kapatma seçeneği pasiftir. Panel görünen içeriğe göre küçülür veya büyür. Seçimler uygulama yeniden açıldığında korunur. Claude’u göstermek ilk bağlantı izninin yerine geçmez; mevcut bağlantı tercihi korunur.
+
 ## Göstergeler
 
 | Gösterge | Anlamı |
