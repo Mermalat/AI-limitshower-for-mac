@@ -15,7 +15,7 @@ These changes are available on `main`; the current released DMG is v1.2.0.
 
 ### Interface preview
 
-<img src="docs/images/weekly-usage-preview.png" alt="Weekly token usage chart, daily costs, and collapsible provider cards" width="370" />
+<img src="docs/images/weekly-usage-preview.jpg" alt="Weekly token usage chart, daily costs, and collapsible provider cards" width="370" />
 
 *Actual application UI with sample data, shown in English. No personal usage data is included.*
 
