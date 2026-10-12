@@ -18,7 +18,7 @@ for architecture in "${architectures[@]}"; do
     binary="$temporary/TopBarClaudeCodexLimits-$architecture"
     xcrun swiftc -swift-version 5 -O -module-cache-path build/module-cache \
         -target "$architecture-apple-macosx13.0" \
-        Sources/Localization.swift Sources/Usage.swift Sources/Providers.swift Sources/PanelPlacement.swift Sources/App.swift \
+        Sources/TokenHistory.swift Sources/Localization.swift Sources/Usage.swift Sources/Providers.swift Sources/PanelPlacement.swift Sources/App.swift \
         -o "$binary"
     binaries+=("$binary")
 done

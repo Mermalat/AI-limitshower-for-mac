@@ -23,6 +23,19 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 enum L10n {
     // Columns follow AppLanguage.allCases, excluding the Turkish source column.
     static let translations: [String: [String]] = [
+        "%@ ayrıntılarını aç": ["Expand %@ details", "Mostrar detalles de %@", "%@ の詳細を開く", "展开 %@ 详情", "%@-Details öffnen", "Afficher les détails de %@"],
+        "%@ ayrıntılarını kapat": ["Collapse %@ details", "Ocultar detalles de %@", "%@ の詳細を閉じる", "收起 %@ 详情", "%@-Details schließen", "Masquer les détails de %@"],
+        "Token bölümünü kapat": ["Hide token section", "Ocultar sección de tokens", "トークン欄を非表示", "隐藏 token 部分", "Tokenbereich ausblenden", "Masquer la section tokens"],
+        "Token bölümünü aç": ["Show token section", "Mostrar sección de tokens", "トークン欄を表示", "显示 token 部分", "Tokenbereich einblenden", "Afficher la section tokens"],
+        "Son 7 gün · token kullanımı": ["Last 7 days · token usage", "Últimos 7 días · tokens", "過去 7 日間 · トークン使用量", "最近 7 天 · token 用量", "Letzte 7 Tage · Tokenverbrauch", "7 derniers jours · tokens"],
+        "Tahmini API karşılığı · fatura değildir": ["Estimated API equivalent · not a bill", "Estimación API · no es una factura", "API 相当の推定額 · 請求額ではありません", "估算 API 费用 · 非账单", "Geschätzter API-Wert · keine Rechnung", "Estimation API · pas une facture"],
+        "Bazı modellerin fiyatı bilinmiyor; tutar eksik olabilir.": ["Some model prices are unknown; cost may be incomplete.", "Precios de algunos modelos desconocidos; el coste puede ser incompleto.", "一部のモデルの価格が不明なため、金額が不足する場合があります。", "部分模型价格未知，金额可能不完整。", "Einige Modellpreise fehlen; der Betrag kann unvollständig sein.", "Certains tarifs sont inconnus ; le montant peut être incomplet."],
+        "Bazı yerel kayıtlar okunamadı; toplam eksik olabilir.": ["Some local records could not be read; totals may be incomplete.", "No se pudieron leer algunos registros; los totales pueden ser incompletos.", "一部のローカル記録を読み取れず、合計が不足する場合があります。", "部分本地记录无法读取，合计可能不完整。", "Einige lokale Einträge sind nicht lesbar; Summen können unvollständig sein.", "Certains journaux locaux sont illisibles ; les totaux peuvent être incomplets."],
+        "Token kullanımı hesaplanıyor…": ["Calculating token usage…", "Calculando tokens…", "トークン使用量を計算中…", "正在计算 token 用量…", "Tokenverbrauch wird berechnet…", "Calcul des tokens…"],
+        "Yerel kullanım kaydı bulunamadı.": ["No local usage records found.", "No hay registros de uso locales.", "ローカルの使用記録がありません。", "未找到本地用量记录。", "Keine lokalen Nutzungsdaten gefunden.", "Aucun journal d’utilisation local trouvé."],
+        "Bugün dahil son 7 gün, bu Mac’in yerel saatine göre. Standart API karşılığı; fatura değildir.": ["Last 7 days including today, in this Mac’s local time. API equivalent, not a bill.", "Últimos 7 días, incluido hoy, en la hora local de este Mac. Estimación API, no factura.", "今日を含む過去 7 日間。この Mac の現地時間。API 相当額で、請求額ではありません。", "含今天在内的最近 7 天，按此 Mac 的本地时间。API 估算费用，非账单。", "Letzte 7 Tage einschließlich heute, lokale Zeit dieses Macs. API-Schätzung, keine Rechnung.", "7 derniers jours, aujourd’hui inclus, heure locale de ce Mac. Estimation API, pas une facture."],
+        "Tarih": ["Date", "Fecha", "日付", "日期", "Datum", "Date"],
+
         "Kullanım durumu": ["Usage", "Uso", "使用状況", "使用情况", "Nutzung", "Utilisation"],
         "%@ · kalan kota": ["%@ · remaining quota", "%@ · cuota restante", "%@ · 残りの上限", "%@ · 剩余额度", "%@ · verbleibendes Kontingent", "%@ · quota restant"],
         "Codex ve Claude": ["Codex and Claude", "Codex y Claude", "Codex と Claude", "Codex 和 Claude", "Codex und Claude", "Codex et Claude"],

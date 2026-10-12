@@ -2,6 +2,23 @@
 
 macOS menü çubuğunda Codex ve Claude aboneliğinin kalan limitlerini gösteren, Swift / SwiftUI / AppKit ile yazılmış bağımsız uygulama. macOS 13 veya üzeri gerekir. DMG hem Apple Silicon hem Intel mimarilerini içerir. Arayüz Türkçe, İngilizce, İspanyolca, Japonca, basitleştirilmiş Çince, Almanca ve Fransızca destekler. Üç nokta menüsündeki dil seçimi kaydedilir.
 
+## Latest changes on main
+
+The latest source version adds **weekly token usage and estimated USD API costs** separately for Codex and Claude. Each provider includes a daily bar chart and a table with dates, exact token counts, and dollar estimates for today and the preceding six local calendar days.
+
+- Show or hide the token section from the three-dot menu; the preference is saved.
+- Expand each provider with its header arrow. Collapsed cards keep the remaining quota visible.
+- Resizing now updates the content and window together to prevent overlapping text and charts. The arrow still rotates smoothly.
+- Totals are computed from local session logs. Dollar amounts are estimated API equivalents, **not invoices or subscription charges**. See [how token usage is calculated](docs/TOKEN_USAGE.md).
+
+These changes are available on `main`; the current released DMG is v1.2.0.
+
+### Interface preview
+
+<img src="docs/images/weekly-usage-preview.png" alt="Weekly token usage chart, daily costs, and collapsible provider cards" width="370" />
+
+*Actual application UI with sample data, shown in English. No personal usage data is included.*
+
 ## DMG ile kurulum
 
 [Releases](https://github.com/Mermalat/AI-limitshower-for-mac/releases) bölümünden `TopBarClaudeCodexLimits-1.2.0-universal.dmg` dosyasını indir, aç ve uygulamayı **Applications / Uygulamalar** klasörüne sürükle. Uygulamayı bu klasörden aç; Dock simgesi bulunmaz, menü çubuğunda iki gösterge görünür.
@@ -36,6 +53,10 @@ Uygulama açıldığında ve ardından seçtiğin aralıkta limitleri sorgular. 
 
 Panelin yüksekliği görünen içeriğe göre ayarlanır: tek sağlayıcıda küçülür, ikinci sağlayıcı açıldığında büyür. Dil değişimindeki satır kaydırmaları da hesaba katılır. Ekrana sığmayan içerik kaydırılabilir; panel ekran sınırları içinde kalır.
 
+## Token kullanımı
+
+Her sağlayıcı kartında **Son 7 gün · token kullanımı** bölümü vardır. Üç nokta menüsündeki **Token bölümünü kapat / aç** seçeneği iki sağlayıcının token toplamını, grafiğini ve günlük tablosunu birlikte gizler veya gösterir. Seçim kaydedilir; kapalıyken token geçmişi taranmaz. Bugün dahil son 7 takvim gününün token toplamı bu Mac’teki Codex / Claude Code oturum kayıtlarından okunur; dolar tutarı standart API fiyatlarıyla **tahmini karşılıktır**, gerçek fatura veya abonelik ücreti değildir. Her sağlayıcı için günlük sütun grafiği ve altında tarih, tam token sayısı ve USD karşılığı bulunur. Günler Mac’in yerel saatine göre ayrılır; kullanım olmayan günler sıfır gösterilir. Girdi, çıktı, önbellekten okuma ve yazma ayrı hesaplanır. Kullanım kayıtları dışarı gönderilmez. Bulunamayan kayıtlar ve fiyatı bilinmeyen modeller ayrıca belirtilir. Fiyatlar 12 Ekim 2026’da doğrulanmıştır; ayrıntılar [token hesabı belgesinde](docs/TOKEN_USAGE.md).
+
 ## Hesap bağlantıları
 
 **Codex:** kurulu `codex` üzerinden `app-server` başlatılır, `initialize` / `initialized` sonrasında yalnızca `account/rateLimits/read` çağrılır. Her okumadan sonra alt süreç kapatılır; konuşma, model isteği veya limit sıfırlama işlemi başlatılmaz. Önceden Codex’e ChatGPT hesabınla giriş yapmış olmalısın. API anahtarıyla çalışan hesapların abonelik limitleri bulunmayabilir.
@@ -55,6 +76,10 @@ Claude kullanım uç noktası resmî olarak belgelenmiş bir genel API değildir
 `./test.sh --live-codex` ayrıca mevcut Codex hesabından canlı limitleri okur. Test çıktısında kimlik bilgileri bulunmaz.
 
 Bu Mac’te eski `local.TopBarClaudeCodexLimits` kimliğiyle menü öğeleri görünmüyordu: aynı minimal test, farklı kimlikle ekrana yerleşirken eski kimlikle ekran dışına düşüyordu. Uygulamanın kalıcı kimliği `com.mermalat.TopBarClaudeCodexLimits` olarak düzeltildi ve her iki göstergenin ekran içindeki konumu canlı olarak doğrulandı. Bu macOS kayıt sorunu ağsız birim testleriyle yakalanamaz; arayüzde ayrıca kontrol edilmelidir.
+
+## Kart ayrıntıları
+
+Codex ve Claude kartları başlangıçta kompakt görünür. Kart başlığındaki aşağı oka basınca limitler ve açıksa token toplamı, grafik ve günlük tablo açılır. Metin ve grafiklerin üst üste binmemesi için içerik ve pencere boyutu doğrudan güncellenir; yalnızca ok yaklaşık 0,25 saniyede yumuşakça döner. Aynı ok ayrıntıları kapatır; iki kart birbirinden bağımsızdır. Kapalı kartta kalan yüzde görünür. macOS’ta Hareketi Azalt ayarı açıksa animasyon uygulanmaz.
 
 ## Sağlayıcı seçimi
 

@@ -52,7 +52,7 @@ Yalnızca `claudeAiOauth.accessToken` kullanılır. Boş veya satır sonu içere
 
 Son başarılı anlık görüntü ve hata bellekte tutulur. Yeni okuma başarısız olursa eski görüntü korunur ve `!` / **Eski veri** olarak işaretlenir.
 
-`UserDefaults` sağlayıcıların görünürlüğünü, Claude bağlantı tercihini, otomatik güncelleme aralığını ve dil seçimini tutar; AppKit ayrıca menü öğesi konumlarını yönetebilir. Kullanım yüzdeleri veya token uygulama tarafından diske yazılmaz. Uygulama mevcut oturum dosyalarını değiştirmez ve token yenilemez.
+`UserDefaults` sağlayıcıların görünürlüğünü, Claude bağlantı tercihini, otomatik güncelleme aralığını ve dil seçimini tutar; AppKit ayrıca menü öğesi konumlarını yönetebilir. Kullanım yüzdeleri ve hesaplanan token toplamları uygulama tarafından diske yazılmaz. Uygulama mevcut oturum dosyalarını değiştirmez ve token yenilemez.
 
 Sağlayıcı görünürlüğü yalnızca `setCodexVisible()` / `setClaudeVisible()` üzerinden değiştirilir; son açık sağlayıcı kapatılamaz. Kayıtlı iki tercih de kapalıysa başlangıçta Codex açılarak kayıt onarılır. Kapalı sağlayıcı için yeni sorgu başlatılmaz. Devam eden sorgu tamamlanabilir; görünürlük değişiminden önce başlayan sorguların sonucu veya hatası uygulanmaz. Panelin dayandığı menü öğesi gizleniyorsa panelin dayanağı açık kalan öğeye taşınır.
 
@@ -68,3 +68,9 @@ Sağlayıcı görünürlüğü yalnızca `setCodexVisible()` / `setClaudeVisible
 ## Yerelleştirme
 
 `Localization.swift` yedi dilin metinlerini, biçimlendirme yer tutucularını ve tarih yerellerini içerir. `UsageStore.setLanguage()` tercihi kaydeder ve görünümü günceller. Sağlayıcı hataları metin yerine hata olarak saklanır; mevcut hata ve kota başlıkları dil değiştiğinde yeni bir sorgu gerektirmeden çevrilir. Sistem hataları genel, çevrilmiş bir okuma hatasıyla gösterilir.
+
+## Yerel token geçmişi
+
+`TokenHistory.swift` bugün dahil son 7 takvim gününün sayaçlarını yerel JSONL dosyalarından akış halinde okur. Codex’te ardışık kümülatif sayaç farkları, Claude’da mesaj kimliğine göre birleştirilen sayaçlar kullanılır. Aynı Codex olayının fork / arşiv kopyaları ve Claude’un tekrarlanan çıktı parçaları tek sayılır. Guardian güvenlik oturumları ve sentetik mesajlar hariçtir. `UsageStore` bu okuma işini arka planda, açık sağlayıcılar için yenilemeyle birlikte çalıştırır; kapatılıp açılmadan önce başlamış sonuçlar uygulanmaz. Oturum metinleri saklanmaz, günlüğe yazılmaz veya ağa gönderilmez. Hesaplanan tutar API ücret tarifesine göre bir tahmindir; ayrıntılar `TOKEN_USAGE.md` içindedir.
+
+Haftalık token ve USD toplamları aynı günlük kovaların toplamıdır. `DailyTokenUsage` gün başlangıcı, token, USD ve fiyatı bilinmeyen token sayılarını tutar. Takvim sınırı `Calendar.startOfDay` ve takvim günü ekleme ile hesaplanır; sabit saat hesabı yapılmaz. Günlük grafik ve tablo boş günleri de içerir.

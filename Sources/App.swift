@@ -7,6 +7,9 @@ import Darwin
 
 @MainActor
 final class UsageStore: ObservableObject {
+    @Published var codexTokens: TokenHistorySummary?
+    @Published var claudeTokens: TokenHistorySummary?
+    @Published var historyLoading = false
     @Published var codex: UsageSnapshot?
     @Published var claude: UsageSnapshot?
     @Published var codexError: Error?
@@ -16,6 +19,9 @@ final class UsageStore: ObservableObject {
     @Published private(set) var claudeEnabled: Bool
     @Published private(set) var codexVisible: Bool
     @Published private(set) var claudeVisible: Bool
+    @Published private(set) var codexExpanded = false
+    @Published private(set) var claudeExpanded = false
+    @Published private(set) var tokensVisible: Bool
     @Published private(set) var language: AppLanguage
     private let defaults: UserDefaults
     private var codexRevision = 0
@@ -23,6 +29,7 @@ final class UsageStore: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        tokensVisible = defaults.object(forKey: "tokensVisible") as? Bool ?? true
         language = AppLanguage(rawValue: defaults.string(forKey: "language") ?? "tr") ?? .tr
         claudeEnabled = defaults.bool(forKey: "claudeEnabled")
         codexVisible = defaults.object(forKey: "codexVisible") as? Bool ?? true
@@ -40,7 +47,7 @@ final class UsageStore: ObservableObject {
         codexVisible = visible
         codexRevision += 1
         defaults.set(visible, forKey: "codexVisible")
-        if visible { refresh() } else { codex = nil; codexError = nil }
+        if visible { refresh() } else { codex = nil; codexError = nil; codexTokens = nil }
         onChange?()
     }
 
@@ -49,7 +56,7 @@ final class UsageStore: ObservableObject {
         claudeVisible = visible
         claudeRevision += 1
         defaults.set(visible, forKey: "claudeVisible")
-        if visible { refresh() } else { claude = nil; claudeError = nil }
+        if visible { refresh() } else { claude = nil; claudeError = nil; claudeTokens = nil }
         onChange?()
     }
     @Published private(set) var refreshMinutes: Int
@@ -57,6 +64,26 @@ final class UsageStore: ObservableObject {
     private var timer: Timer?
     private var claudeRetryAt = Date.distantPast
     private var lastManualRefresh = Date.distantPast
+
+    func setCodexExpanded(_ expanded: Bool) {
+        guard expanded != codexExpanded else { return }
+        codexExpanded = expanded
+        onChange?()
+    }
+
+    func setClaudeExpanded(_ expanded: Bool) {
+        guard expanded != claudeExpanded else { return }
+        claudeExpanded = expanded
+        onChange?()
+    }
+
+    func setTokensVisible(_ visible: Bool) {
+        guard visible != tokensVisible else { return }
+        tokensVisible = visible
+        defaults.set(visible, forKey: "tokensVisible")
+        if visible { refresh() }
+        onChange?()
+    }
 
     func setLanguage(_ language: AppLanguage) {
         guard language != self.language else { return }
@@ -88,6 +115,24 @@ final class UsageStore: ObservableObject {
         if manual {
             guard Date().timeIntervalSince(lastManualRefresh) >= 30 else { return }
             lastManualRefresh = Date()
+        }
+        if tokensVisible && !historyLoading {
+            historyLoading = true
+            let codexRevision = self.codexRevision
+            let claudeRevision = self.claudeRevision
+            let readCodex = codexVisible
+            let readClaude = claudeVisible
+            Task {
+                let summaries = await Task.detached(priority: .utility) {
+                    (readCodex ? TokenHistory.read(.codex) : nil, readClaude ? TokenHistory.read(.claude) : nil)
+                }.value
+                if tokensVisible && codexVisible && codexRevision == self.codexRevision { codexTokens = summaries.0 }
+                if tokensVisible && claudeVisible && claudeRevision == self.claudeRevision { claudeTokens = summaries.1 }
+                historyLoading = false
+                onChange?()
+                if (codexVisible && codexRevision != self.codexRevision)
+                    || (claudeVisible && claudeRevision != self.claudeRevision) { refresh() }
+            }
         }
         if codexVisible && !codexLoading {
             codexLoading = true
@@ -178,15 +223,15 @@ struct LimitsPanel: View {
             }
 
             if store.codexVisible {
-                ProviderCard(name: "Codex", language: language, accent: codexAccent, snapshot: store.codex,
-                             error: store.codexError, loading: store.codexLoading,
+                ProviderCard(name: "Codex", expanded: store.codexExpanded, onToggle: { store.setCodexExpanded(!store.codexExpanded) }, language: language, accent: codexAccent, snapshot: store.codex,
+                             error: store.codexError, loading: store.codexLoading, tokens: store.codexTokens, tokensVisible: store.tokensVisible,
                              usageURL: "https://chatgpt.com/codex/settings/usage")
             }
 
             if store.claudeVisible {
                 if store.claudeEnabled {
-                    ProviderCard(name: "Claude", language: language, accent: claudeAccent, snapshot: store.claude,
-                                 error: store.claudeError, loading: store.claudeLoading,
+                    ProviderCard(name: "Claude", expanded: store.claudeExpanded, onToggle: { store.setClaudeExpanded(!store.claudeExpanded) }, language: language, accent: claudeAccent, snapshot: store.claude,
+                                 error: store.claudeError, loading: store.claudeLoading, tokens: store.claudeTokens, tokensVisible: store.tokensVisible,
                                  usageURL: "https://claude.ai/settings/usage")
                 } else {
                     VStack(alignment: .leading, spacing: 12) {
@@ -195,12 +240,22 @@ struct LimitsPanel: View {
                             Text("Claude").font(.system(size: 15, weight: .semibold))
                             Spacer()
                             Text(L10n.text("Bağlı değil", language)).font(.system(size: 11)).foregroundStyle(.secondary)
+                            ProviderArrow(name: "Claude", expanded: store.claudeExpanded, language: language) {
+                                store.setClaudeExpanded(!store.claudeExpanded)
+                            }
                         }
-                        Text(L10n.text("Mevcut Claude Code oturumunla limitlerini göster. Bağlantı, oturum token’ını yalnızca Anthropic’in kullanım servisine gönderir.", language))
-                            .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                        Button(L10n.text("Claude bağlantısını etkinleştir", language)) { store.enableClaude() }
-                            .buttonStyle(.borderedProminent).tint(claudeAccent)
-                    }.padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
+                        if store.claudeExpanded {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(L10n.text("Mevcut Claude Code oturumunla limitlerini göster. Bağlantı, oturum token’ını yalnızca Anthropic’in kullanım servisine gönderir.", language))
+                                    .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                if store.tokensVisible {
+                                    TokenUsageView(summary: store.claudeTokens, language: language).accentColor(claudeAccent)
+                                }
+                                Button(L10n.text("Claude bağlantısını etkinleştir", language)) { store.enableClaude() }
+                                    .buttonStyle(.borderedProminent).tint(claudeAccent)
+                            }
+                        }
+                    }.clipped().padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
                 }
             }
 
@@ -236,6 +291,10 @@ struct LimitsPanel: View {
                     }.disabled(store.claudeVisible && !store.codexVisible)
                     Text(L10n.text("En az bir sağlayıcı açık kalmalı", language))
                     Divider()
+                    Button(L10n.text(store.tokensVisible ? "Token bölümünü kapat" : "Token bölümünü aç", language)) {
+                        store.setTokensVisible(!store.tokensVisible)
+                    }
+                    Divider()
                     Picker(L10n.text("Dil", language), selection: Binding(
                         get: { store.language }, set: { store.setLanguage($0) })) {
                         ForEach(AppLanguage.allCases) { language in
@@ -261,6 +320,7 @@ struct PanelContent: View {
         ScrollView {
             LimitsPanel(store: store).fixedSize(horizontal: false, vertical: true)
         }.frame(width: 370)
+            .transaction { $0.animation = nil }
     }
 }
 
@@ -289,13 +349,36 @@ final class PanelController: NSHostingController<PanelContent> {
     }
 }
 
+private struct ProviderArrow: View {
+    let name: String
+    let expanded: Bool
+    let language: AppLanguage
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            Image(systemName: "chevron.down")
+                .font(.system(size: 11, weight: .semibold))
+                .rotationEffect(.degrees(expanded ? 180 : 0))
+                .animation(NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? nil : .easeInOut(duration: 0.25), value: expanded)
+                .padding(6).contentShape(Rectangle())
+        }.buttonStyle(.plain)
+            .accessibilityLabel(L10n.text(expanded ? "%@ ayrıntılarını kapat" : "%@ ayrıntılarını aç", language, name))
+            .help(L10n.text(expanded ? "%@ ayrıntılarını kapat" : "%@ ayrıntılarını aç", language, name))
+    }
+}
+
 private struct ProviderCard: View {
     let name: String
+    let expanded: Bool
+    let onToggle: () -> Void
     let language: AppLanguage
     let accent: Color
     let snapshot: UsageSnapshot?
     let error: Error?
     let loading: Bool
+    let tokens: TokenHistorySummary?
+    let tokensVisible: Bool
     let usageURL: String
 
     var body: some View {
@@ -315,30 +398,131 @@ private struct ProviderCard: View {
                 } else {
                     Circle().fill(accent).frame(width: 6, height: 6).accessibilityLabel(L10n.text("Bağlı", language))
                 }
-            }
-            if let snapshot {
-                ForEach(snapshot.windows) { window in
-                    WindowRow(window: window, language: language, accent: accent).opacity(error == nil ? 1 : 0.5)
+                if !expanded, let remaining = snapshot?.remaining {
+                    Text("\(Int(remaining.rounded()))%")
+                        .font(.system(size: 13, weight: .semibold)).monospacedDigit().foregroundStyle(accent)
                 }
-            } else if error == nil {
-                Text(L10n.text("Limitler okunuyor…", language)).font(.system(size: 12)).foregroundStyle(.secondary)
+                ProviderArrow(name: name, expanded: expanded, language: language, onToggle: onToggle)
             }
-            if let error {
-                Label(L10n.error(error, language), systemImage: "exclamationmark.circle")
-                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if expanded {
+                VStack(alignment: .leading, spacing: 14) {
+                    if let snapshot {
+                        ForEach(snapshot.windows) { window in
+                            WindowRow(window: window, language: language, accent: accent).opacity(error == nil ? 1 : 0.5)
+                        }
+                    } else if error == nil {
+                        Text(L10n.text("Limitler okunuyor…", language)).font(.system(size: 12)).foregroundStyle(.secondary)
+                    }
+                    if let error {
+                        Label(L10n.error(error, language), systemImage: "exclamationmark.circle")
+                            .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                    if tokensVisible {
+                        Divider()
+                        TokenUsageView(summary: tokens, language: language).accentColor(accent)
+                    }
+                    HStack {
+                        if let snapshot {
+                            Text(L10n.text("Güncellendi: %@", language, snapshot.fetchedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(language.locale))))
+                                .font(.system(size: 10)).foregroundStyle(.tertiary)
+                        }
+                        Spacer()
+                        Link(destination: URL(string: usageURL)!) {
+                            Image(systemName: "arrow.up.right.square").font(.system(size: 11))
+                        }.foregroundStyle(.secondary).help(L10n.text("%@ kullanım sayfasını aç", language, name))
+                            .accessibilityLabel(L10n.text("%@ kullanım sayfasını aç", language, name))
+                    }
+                }
             }
+        }.clipped().padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+private struct TokenUsageView: View {
+    let summary: TokenHistorySummary?
+    let language: AppLanguage
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(L10n.text("Son 7 gün · token kullanımı", language))
+                .font(.system(size: 12, weight: .medium))
+            if let summary, summary.available {
+                HStack {
+                    Text(summary.tokens.formatted(.number.locale(language.locale).precision(.fractionLength(0))) + " tokens")
+                        .monospacedDigit()
+                    Spacer()
+                    Text(summary.hasPrice ? summary.usd.formatted(.currency(code: "USD").locale(language.locale)) : "—")
+                        .monospacedDigit().fontWeight(.semibold)
+                }.font(.system(size: 13))
+                Text(L10n.text("Tahmini API karşılığı · fatura değildir", language))
+                    .font(.system(size: 10)).foregroundStyle(.secondary)
+                DailyTokenChart(days: summary.days, language: language)
+                if summary.unpricedTokens > 0 {
+                    Text(L10n.text("Bazı modellerin fiyatı bilinmiyor; tutar eksik olabilir.", language))
+                        .font(.system(size: 10)).foregroundStyle(.orange)
+                }
+                if summary.incomplete {
+                    Text(L10n.text("Bazı yerel kayıtlar okunamadı; toplam eksik olabilir.", language))
+                        .font(.system(size: 10)).foregroundStyle(.orange)
+                }
+            } else {
+                Text(L10n.text(summary == nil ? "Token kullanımı hesaplanıyor…" : "Yerel kullanım kaydı bulunamadı.", language))
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+            }
+        }.help(L10n.text("Bugün dahil son 7 gün, bu Mac’in yerel saatine göre. Standart API karşılığı; fatura değildir.", language))
+    }
+}
+
+struct DailyTokenChart: View {
+    let days: [DailyTokenUsage]
+    let language: AppLanguage
+    private var peak: Double { max(1, days.map(\.tokens).max() ?? 0) }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(alignment: .bottom, spacing: 6) {
+                ForEach(days) { day in
+                    VStack(spacing: 5) {
+                        ZStack(alignment: .bottom) {
+                            RoundedRectangle(cornerRadius: 4).fill(Color.secondary.opacity(0.08))
+                            RoundedRectangle(cornerRadius: 4).fill(Color.accentColor)
+                                .frame(height: 90 * day.tokens / peak)
+                        }.frame(height: 90)
+                        Text(day.date.formatted(Date.FormatStyle().day().month(.twoDigits).locale(language.locale)))
+                            .font(.system(size: 9)).lineLimit(1).minimumScaleFactor(0.7)
+                    }.frame(maxWidth: .infinity)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(detail(day))
+                        .help(detail(day))
+                }
+            }.padding(.top, 6)
             HStack {
-                if let snapshot {
-                    Text(L10n.text("Güncellendi: %@", language, snapshot.fetchedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(language.locale))))
-                        .font(.system(size: 10)).foregroundStyle(.tertiary)
-                }
-                Spacer()
-                Link(destination: URL(string: usageURL)!) {
-                    Image(systemName: "arrow.up.right.square").font(.system(size: 11))
-                }.foregroundStyle(.secondary).help(L10n.text("%@ kullanım sayfasını aç", language, name))
-                    .accessibilityLabel(L10n.text("%@ kullanım sayfasını aç", language, name))
+                Text(L10n.text("Tarih", language)).frame(maxWidth: .infinity, alignment: .leading)
+                Text("Tokens").frame(maxWidth: .infinity, alignment: .trailing)
+                Text("USD").frame(width: 75, alignment: .trailing)
+            }.foregroundStyle(.secondary)
+            ForEach(days) { day in
+                HStack {
+                    Text(day.date.formatted(Date.FormatStyle().day().month(.abbreviated).locale(language.locale)))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(day.tokens.formatted(.number.locale(language.locale).precision(.fractionLength(0))))
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    Text(cost(day)).frame(width: 75, alignment: .trailing)
+                }.monospacedDigit()
             }
-        }.padding(16).background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
+        }.font(.system(size: 10))
+    }
+
+    private func cost(_ day: DailyTokenUsage) -> String {
+        guard day.hasPrice else { return "—" }
+        return (day.unpricedTokens > 0 ? "≥ " : "")
+            + day.usd.formatted(.currency(code: "USD").locale(language.locale))
+    }
+
+    private func detail(_ day: DailyTokenUsage) -> String {
+        day.date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(language.locale))
+            + " · " + day.tokens.formatted(.number.locale(language.locale).precision(.fractionLength(0)))
+            + " tokens · " + cost(day)
     }
 }
 
@@ -405,6 +589,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             statusItems.append(item)
         }
         popover.behavior = .transient
+        // Animated viewport resizing conflicts with SwiftUI layout and can overlay card contents.
         popover.animates = false
         popover.delegate = self
         store.onChange = { [weak self] in self?.updateTitle() }
@@ -454,7 +639,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             guard let screen = button.window?.screen ?? NSScreen.main else { return }
             let maximum = screen.visibleFrame.height - 48
             let controller = PanelController(store: store, maximumHeight: maximum) { [weak self] size in
-                self?.popover.contentSize = size
+                self?.resizePanel(to: size)
             }
             popover.contentViewController = controller
             controller.resizeToContent()
@@ -464,6 +649,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     func popoverDidShow(_ notification: Notification) {
         positionPanelOnScreen()
+    }
+
+    private func resizePanel(to size: NSSize) {
+        guard popover.contentSize != size else { return }
+        popover.contentSize = size
     }
 
     private func positionPanelOnScreen() {

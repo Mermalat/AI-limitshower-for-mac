@@ -1,5 +1,15 @@
 # Sürüm notları
 
+## Unreleased
+
+- Added per-provider token totals and estimated USD API equivalents for today and the previous six local calendar days.
+- Added daily bar charts and tables showing each date, exact token count, and estimated USD value. Days without usage remain visible with zero values.
+- Added a persistent **Show / Hide token section** menu option. It controls totals, charts, and daily tables together; new local history scans stop while the section is hidden.
+- Provider cards now open and close independently with header arrows. Collapsed cards keep the remaining quota visible.
+- Fixed overlapping text and charts during resizing by updating content and window dimensions immediately. Only the chevron rotation remains animated, with support for Reduce Motion.
+- Deduplicated repeated, forked, and streamed token records; accounted for cache read/write rates; added notices for incomplete history and unknown model prices.
+- Added regression coverage for local day boundaries, daily totals, rapid card toggling, saved token visibility, and layout in all seven languages.
+
 ## 1.2.0 — 2026-10-12
 
 - Codex ve Claude ayrı ayrı açılıp kapatılabilir; son açık sağlayıcı kapatılamaz.

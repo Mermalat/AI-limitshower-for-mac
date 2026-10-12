@@ -14,6 +14,21 @@ struct StoreTests {
         let store = UsageStore(defaults: defaults)
         assert(store.codexVisible && store.claudeVisible)
         assert(!store.claudeEnabled)
+        assert(!store.codexExpanded && !store.claudeExpanded)
+        store.setCodexExpanded(true)
+        assert(store.codexExpanded && !store.claudeExpanded)
+        store.setClaudeExpanded(true)
+        assert(store.codexExpanded && store.claudeExpanded)
+        assert(store.tokensVisible)
+        store.setTokensVisible(false)
+        assert(!UsageStore(defaults: defaults).tokensVisible)
+        store.codexLoading = true
+        store.claudeLoading = true
+        store.refresh()
+        assert(!store.historyLoading, "Kapalı token bölümünde günlükler taranmamalı")
+        store.historyLoading = true
+        store.setTokensVisible(true)
+        assert(UsageStore(defaults: defaults).tokensVisible)
         store.codexLoading = true
         store.claudeLoading = true
         store.setCodexVisible(false)
@@ -89,6 +104,11 @@ struct StoreTests {
             return view.fittingSize.height
         }
         let bothHeight = contentHeight()
+        store.setCodexExpanded(false)
+        assert(contentHeight() < bothHeight, "Kapalı kart kompakt olmalı")
+        assert(store.claudeExpanded, "Diğer kartın açık durumu değişmemeli")
+        store.setCodexExpanded(true)
+        assert(contentHeight() == bothHeight, "Açılan kartın ayrıntıları geri gelmeli")
         store.setClaudeVisible(false)
         let singleHeight = contentHeight()
         assert(singleHeight > 0 && singleHeight < bothHeight, "Tek sağlayıcı içeriği küçülmeli")
@@ -118,6 +138,23 @@ struct StoreTests {
             }
         }
         settleLayout()
+        let expandedFrame = panelWindow.frame
+        store.setCodexExpanded(false)
+        settleLayout()
+        assert(panelWindow.frame.height < expandedFrame.height, "Kart kapatıldığında gerçek pencere küçülmeli")
+        store.setCodexExpanded(true)
+        settleLayout()
+        assert(abs(panelWindow.frame.height - expandedFrame.height) < 2, "Kart açıldığında gerçek pencere büyümeli")
+        // Rapid expansion changes must use the current layout immediately, without stale viewport sizes.
+        for index in 0..<10 {
+            store.setCodexExpanded(index % 2 == 0)
+            panelWindow.contentView?.layoutSubtreeIfNeeded()
+            let expected = min(ceil(contentHeight()), 760)
+            assert(abs(panelWindow.frame.height - expected) < 2, "Eski kart boyutu yeni içerikle karışmamalı")
+        }
+        store.setCodexExpanded(true)
+        settleLayout()
+        print("PASS: hızlı kart geçişlerinde pencere ve içerik boyutları aynı.")
         let fullFrame = panelWindow.frame
         store.setClaudeVisible(false)
         settleLayout()
@@ -134,6 +171,30 @@ struct StoreTests {
         print("PASS: gerçek pencere küçülme/büyüme ve ekran yüksekliği sınırı.")
         store.onChange = nil
         panelWindow.close()
+        let today = Calendar.current.startOfDay(for: Date())
+        let chartDays = (0..<7).map { index in
+            DailyTokenUsage(date: Calendar.current.date(byAdding: .day, value: index - 6, to: today)!,
+                            tokens: Double([0, 2500, 15000, 5000, 30000, 10000, 20000][index]),
+                            usd: Double(index) * 0.45)
+        }
+        let chartSummary = TokenHistorySummary(days: chartDays,
+            tokens: chartDays.reduce(0) { $0 + $1.tokens }, usd: chartDays.reduce(0) { $0 + $1.usd }, records: 6)
+        store.codexTokens = chartSummary
+        store.claudeTokens = chartSummary
+        for language in AppLanguage.allCases {
+            store.setLanguage(language)
+            let view = NSHostingView(rootView: LimitsPanel(store: store))
+            assert(view.fittingSize.height > bothHeight, "Grafik ve günlük tablo panel içeriğinde görünmeli")
+            assert(view.fittingSize.width == 370, "Grafik panel genişliğini aşmamalı")
+        }
+        let withTokens = contentHeight()
+        store.setTokensVisible(false)
+        let withoutTokens = contentHeight()
+        assert(withoutTokens < withTokens, "Token bölümü kapatılınca panel küçülmeli")
+        store.setTokensVisible(true)
+        assert(contentHeight() == withTokens, "Token bölümü yeniden gösterilmeli")
+        print("PASS: token bölümü açma/kapatma, kalıcı tercih, tarama durdurma ve panel boyutu.")
+        print("PASS: yedi dilde haftalık grafik, günlük tablo ve panel genişliği.")
         print("PASS: tek/çift sağlayıcı yüksekliği ve yedi dilde içerik ölçümü.")
         print("PASS: yedi dil, çeviri biçimleri, dinamik başlıklar ve kalıcı dil tercihi.")
         print("PASS: tek sağlayıcı, son sağlayıcı koruması, kapalı sorgular, kalıcı seçimler ve güncelleme aralığı.")
