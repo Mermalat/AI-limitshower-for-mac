@@ -1,0 +1,11 @@
+<schemalist>
+  <schema id="org.gnome.shell.extensions.ai-limitshower" path="/org/gnome/shell/extensions/ai-limitshower/">
+    <key name="codex-visible" type="b"><default>true</default><summary>Show Codex</summary></key>
+    <key name="claude-visible" type="b"><default>true</default><summary>Show Claude</summary></key>
+    <key name="claude-connected" type="b"><default>false</default><summary>Allow sending the existing Claude session token to the Anthropic usage endpoint</summary></key>
+    <key name="tokens-visible" type="b"><default>true</default><summary>Show token history</summary></key>
+    <key name="refresh-minutes" type="i"><default>5</default><range min="1" max="10"/><summary>Refresh interval</summary></key>
+    <key name="language" type="s"><default>'tr'</default><choices><choice value="tr"/><choice value="en"/><choice value="es"/><choice value="ja"/><choice value="zh"/><choice value="de"/><choice value="fr"/></choices><summary>Interface language</summary></key>
+    <key name="codex-path" type="s"><default>''</default><summary>Optional absolute Codex CLI path</summary></key>
+  </schema>
+</schemalist>

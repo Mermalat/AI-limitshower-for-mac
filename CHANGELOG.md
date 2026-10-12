@@ -10,6 +10,10 @@
 - Deduplicated repeated, forked, and streamed token records; accounted for cache read/write rates; added notices for incomplete history and unknown model prices.
 - Added regression coverage for local day boundaries, daily totals, rapid card toggling, saved token visibility, and layout in all seven languages.
 
+## GNOME 1.0.0-alpha.1 — 2026-10-13
+
+- Added an independent GNOME Shell top bar port in `gnome/`, including provider indicators, dark expandable cards, weekly token/cost charts, seven languages and persistent preferences. Includes a user installer, extension ZIP builder, documentation and automated backend/lifecycle tests. This is a development build; real GNOME session testing remains pending.
+
 ## 1.2.0 — 2026-10-12
 
 - Codex ve Claude ayrı ayrı açılıp kapatılabilir; son açık sağlayıcı kapatılamaz.

@@ -2,6 +2,10 @@
 
 macOS menü çubuğunda Codex ve Claude aboneliğinin kalan limitlerini gösteren, Swift / SwiftUI / AppKit ile yazılmış bağımsız uygulama. macOS 13 veya üzeri gerekir. DMG hem Apple Silicon hem Intel mimarilerini içerir. Arayüz Türkçe, İngilizce, İspanyolca, Japonca, basitleştirilmiş Çince, Almanca ve Fransızca destekler. Üç nokta menüsündeki dil seçimi kaydedilir.
 
+## GNOME top bar version
+
+A separate Linux GNOME Shell extension is available in [`gnome/`](gnome/README.md), with the same provider logos, dark cards, expandable details, weekly token charts and saved settings. Build/install instructions and current verification limits are documented there. Download the [GNOME 1.0.0-alpha.1 pre-release](https://github.com/Mermalat/AI-limitshower-for-mac/releases/tag/gnome-v1.0.0-alpha.1). This is an installable development port; live GNOME rendering has not yet been verified.
+
 ## Latest changes on main
 
 The latest source version adds **weekly token usage and estimated USD API costs** separately for Codex and Claude. Each provider includes a daily bar chart and a table with dates, exact token counts, and dollar estimates for today and the preceding six local calendar days.

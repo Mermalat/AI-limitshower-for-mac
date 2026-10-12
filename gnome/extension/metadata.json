@@ -1,0 +1,17 @@
+{
+  "uuid": "ai-limitshower@mermalat",
+  "name": "Claude & Codex Limits",
+  "description": "Codex and Claude Code limits, weekly token charts and estimated USD costs.",
+  "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51"
+  ],
+  "version": 1,
+  "settings-schema": "org.gnome.shell.extensions.ai-limitshower",
+  "url": "https://github.com/Mermalat/AI-limitshower-for-mac"
+}
