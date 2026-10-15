@@ -6,7 +6,7 @@ version="$(cat VERSION)"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Geçersiz VERSION' >&2; exit 1; }
 ./test.sh
 ./build.sh --universal
-app=build/universal/TopBarClaudeCodexLimits.app
+app=build/universal/AIlimitshower.app
 binary="$app/Contents/MacOS/TopBarClaudeCodexLimits"
 architectures="$(xcrun lipo -archs "$binary")"
 [[ "$architectures" == 'arm64 x86_64' || "$architectures" == 'x86_64 arm64' ]] || {
@@ -16,7 +16,7 @@ codesign --verify --deep --strict "$app"
 mkdir -p dist
 staging="$(mktemp -d build/dmg.XXXXXX)"
 trap 'rm -rf "$staging"' EXIT
-ditto "$app" "$staging/TopBarClaudeCodexLimits.app"
+ditto "$app" "$staging/AIlimitshower.app"
 ln -s /Applications "$staging/Applications"
 cp docs/INSTALL.md "$staging/Kurulum.md"
 cp LICENSE THIRD_PARTY_NOTICES.md "$staging/"
@@ -26,7 +26,7 @@ hdiutil create -volname "Claude & Codex Limits $version" \
     -srcfolder "$staging" -format UDZO -fs HFS+ -ov "$dmg"
 hdiutil verify "$dmg"
 COPYFILE_DISABLE=1 tar -czf "$sources" \
-    Sources Tests Assets docs README.md LICENSE THIRD_PARTY_NOTICES.md \
+    Sources Tests Assets Scripts docs README.md LICENSE THIRD_PARTY_NOTICES.md \
     VERSION .gitignore build.sh run.sh test.sh package.sh CHANGELOG.md
 (
     cd dist

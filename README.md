@@ -6,16 +6,18 @@ macOS menü çubuğunda Codex ve Claude aboneliğinin kalan limitlerini göstere
 
 A separate Linux GNOME Shell extension is available in [`gnome/`](gnome/README.md), with the same provider logos, dark cards, expandable details, weekly token charts and saved settings. Build/install instructions and current verification limits are documented there. Download the [GNOME 1.0.0-alpha.1 pre-release](https://github.com/Mermalat/AI-limitshower-for-mac/releases/tag/gnome-v1.0.0-alpha.1). This is an installable development port; live GNOME rendering has not yet been verified.
 
-## Latest changes on main
+## Latest macOS release: v1.3.0
 
-The latest source version adds **weekly token usage and estimated USD API costs** separately for Codex and Claude. Each provider includes a daily bar chart and a table with dates, exact token counts, and dollar estimates for today and the preceding six local calendar days.
+Version 1.3.0 adds **weekly token usage and estimated USD API costs** separately for Codex and Claude. Each provider includes a daily bar chart and a table with dates, exact token counts, and dollar estimates for today and the preceding six local calendar days.
 
 - Show or hide the token section from the three-dot menu; the preference is saved.
 - Expand each provider with its header arrow. Collapsed cards keep the remaining quota visible.
 - Resizing now updates the content and window together to prevent overlapping text and charts. The arrow still rotates smoothly.
 - Totals are computed from local session logs. Dollar amounts are estimated API equivalents, **not invoices or subscription charges**. See [how token usage is calculated](docs/TOKEN_USAGE.md).
 
-These changes are available on `main`; the current released DMG is v1.2.0.
+Weekly history scans now release temporary parsing objects per 64 KiB chunk. In the measured stress test, peak resident memory fell from 276 MiB to 12 MiB. See [measurements and limitations](docs/PERFORMANCE.md).
+
+Download the [v1.3.0 macOS release](https://github.com/Mermalat/AI-limitshower-for-mac/releases/tag/v1.3.0). The app is named **AIlimitshower** and has a rocket icon for Finder and Raycast.
 
 ### Interface preview
 
@@ -25,7 +27,7 @@ These changes are available on `main`; the current released DMG is v1.2.0.
 
 ## DMG ile kurulum
 
-[Releases](https://github.com/Mermalat/AI-limitshower-for-mac/releases) bölümünden `TopBarClaudeCodexLimits-1.2.0-universal.dmg` dosyasını indir, aç ve uygulamayı **Applications / Uygulamalar** klasörüne sürükle. Uygulamayı bu klasörden aç; Dock simgesi bulunmaz, menü çubuğunda iki gösterge görünür.
+[Releases](https://github.com/Mermalat/AI-limitshower-for-mac/releases) bölümünden `TopBarClaudeCodexLimits-1.3.0-universal.dmg` dosyasını indir, aç ve uygulamayı **Applications / Uygulamalar** klasörüne sürükle. Uygulamayı bu klasörden aç; Dock simgesi bulunmaz, menü çubuğunda iki gösterge görünür.
 
 Bu sürüm yerel olarak imzalanmıştır; Developer ID imzası ve Apple noter onayı içermez. Başka bir Mac’te ilk açılışta Gatekeeper uyarısı çıkabilir. Ayrıntılar ve Apple’ın resmî yönergesi [kurulum rehberinde](docs/INSTALL.md) bulunur. Codex CLI / Claude Code pakete dahil değildir; mevcut oturumların gerekir.
 
@@ -39,7 +41,7 @@ Bu sürüm yerel olarak imzalanmıştır; Developer ID imzası ve Apple noter on
 
 ## Çalıştırma
 
-Hazır uygulama: `build/TopBarClaudeCodexLimits.app`. Finder’dan çift tıklayabilir veya bu klasörde `./run.sh` çalıştırabilirsin. Dock simgesi yoktur; menü çubuğundaki göstergeyi tıklayarak paneli aç.
+Hazır uygulama: `build/AIlimitshower.app`. Roket simgeli `AIlimitshower.app` paketini Uygulamalar klasörüne taşıyıp Finder’dan veya Raycast’te `AIlimitshower` aratarak açabilirsin; bu klasörde `./run.sh` de kullanılabilir. Dock simgesi yoktur; menü çubuğundaki göstergeyi tıklayarak paneli aç.
 
 Kaynaklardan tekrar derlemek: `./build.sh`. Apple Command Line Tools (`xcode-select --install`) veya Xcode gerekir. Uygulama bu Mac’in mimarisi için derlenir ve yerel olarak imzalanır; başka Mac’lere dağıtım için noter onayı içermez.
 

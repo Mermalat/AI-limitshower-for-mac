@@ -9,7 +9,7 @@ case "${1:-}" in
     --universal) architectures=(arm64 x86_64); output=build/universal ;;
     *) echo 'Kullanım: ./build.sh [--universal]' >&2; exit 1 ;;
 esac
-app="$(pwd)/$output/TopBarClaudeCodexLimits.app"
+app="$(pwd)/$output/AIlimitshower.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" build/module-cache
 temporary="$(mktemp -d build/binaries.XXXXXX)"
 trap 'rm -rf "$temporary"' EXIT
@@ -27,7 +27,7 @@ if [ "${#binaries[@]}" -eq 2 ]; then
 else
     cp "${binaries[0]}" "$app/Contents/MacOS/TopBarClaudeCodexLimits"
 fi
-cp Assets/*.png "$app/Contents/Resources/"
+cp Assets/*.icns Assets/*.png "$app/Contents/Resources/"
 cp LICENSE THIRD_PARTY_NOTICES.md "$app/Contents/Resources/"
 cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -35,8 +35,9 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <plist version="1.0"><dict>
     <key>CFBundleExecutable</key><string>TopBarClaudeCodexLimits</string>
     <key>CFBundleIdentifier</key><string>com.mermalat.TopBarClaudeCodexLimits</string>
-    <key>CFBundleName</key><string>TopBarClaudeCodexLimits</string>
-    <key>CFBundleDisplayName</key><string>Claude &amp; Codex Limits</string>
+    <key>CFBundleName</key><string>AIlimitshower</string>
+    <key>CFBundleDisplayName</key><string>AIlimitshower</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$version</string>
     <key>CFBundleVersion</key><string>$version</string>

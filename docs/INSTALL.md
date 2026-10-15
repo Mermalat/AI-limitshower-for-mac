@@ -12,7 +12,7 @@ Uygulama CLI araçlarını kurmaz, oturum açmaz veya hesabın parolasını iste
 ## DMG kurulumu
 
 1. GitHub Releases bölümünden `TopBarClaudeCodexLimits-<sürüm>-universal.dmg` dosyasını indir.
-2. DMG’yi aç, `TopBarClaudeCodexLimits.app` dosyasını yanındaki **Applications** kısayoluna sürükle.
+2. DMG’yi aç, `AIlimitshower.app` dosyasını yanındaki **Applications** kısayoluna sürükle.
 3. Uygulamayı Uygulamalar klasöründen aç, ardından disk görüntüsünü çıkar.
 4. Menü çubuğunda Codex ve Claude göstergeleri görünür. İkisinden birini tıklayarak ayrıntıları aç.
 

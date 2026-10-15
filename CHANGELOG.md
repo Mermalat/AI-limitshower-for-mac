@@ -1,6 +1,10 @@
 # Sürüm notları
 
-## Unreleased
+## 1.3.0 — 2026-10-15
+
+- Fixed excessive memory growth during weekly token history scans by draining temporary Foundation objects after each 64 KiB chunk. Added a memory regression test alongside existing token-accounting tests.
+
+- Renamed the macOS app bundle and display name to **AIlimitshower**, added a rocket app icon for Finder/Raycast, and open the usage panel on launch. The bundle identifier and saved preferences remain unchanged.
 
 - Added per-provider token totals and estimated USD API equivalents for today and the previous six local calendar days.
 - Added daily bar charts and tables showing each date, exact token count, and estimated USD value. Days without usage remain visible with zero values.

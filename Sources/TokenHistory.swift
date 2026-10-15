@@ -193,7 +193,8 @@ enum TokenHistory {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
         var pending = Data()
-        while let chunk = try handle.read(upToCount: 65536), !chunk.isEmpty {
+        while try autoreleasepool(invoking: { () throws -> Bool in
+            guard let chunk = try handle.read(upToCount: 65536), !chunk.isEmpty else { return false }
             pending.append(chunk)
             while let end = pending.firstIndex(of: 10) {
                 let line = pending.prefix(upTo: end)
@@ -201,7 +202,9 @@ enum TokenHistory {
                 pending.removeSubrange(...end)
             }
             guard pending.count < 16_777_216 else { throw UsageError.message("Yerel uygulamadan beklenmeyen yanıt geldi.") }
-        }
+            // Drain Foundation's temporary JSON objects per chunk, not after the entire history scan.
+            return true
+        }) {}
         // A trailing line can be an in-progress write; wait for its newline on the next refresh.
     }
 }
